@@ -1,10 +1,16 @@
-Data storage on files powered by NVMe
+Vector API powered by Panama Project
 ===================
 
 Project architecture
 -----------
 
-Currently, the project features a reference allocator storing data on files: `MemoryAllocatorOnFile`.
+This project distinguishes between two types of vectors:
+ - On heap vectors represented by all classes implementing the abstract class `AArrayVector`
+ - Off heap vectors represented by all classes implementing `AFixedBlockVector`
+
+By contrast to on heap vectors, off heap (or direct) vectors are bound to a block of direct memory reserved using 
+a dedicated allocator.
+Currently, the project features a reference direct memory allocator for storing data off heap: `UnsafeNativeMemoryAllocator`.
 Though implemented in a straight-forward way, it still has several underlying chunks depending
 on the size of inner blocks it allocates.<br>
 The interface `MemoryAllocator` is the specification for any allocator tested in this project.
@@ -15,20 +21,18 @@ the cost of boxing/unboxing. That's the main reason for the existence of `Chunk`
 read and write methods adapted for primitive types. In this scholar project, we only define methods
 for `int` and `double`.
 
-The project already ships two sets of implementations:
-
-  - the series of `HeapXyzChunk`, acting as a reference, using an underlying Java array
-  - the series of `FileXyzChunk`, that makes use of the `MemoryAllocatorOnFile`.
-
-All Chunk implementations are succinctly tested. Those tests can be used as references for testing
-new implementations of Chunks or Allocators.
-
 Development environment
 -----------
 
-This project is written in Java 15, though it does not use many of the latest features so far.
+This project is written in Java 19, though it does not use many of the latest features so far. Particularly,
+implementation depending on project Panama features are to be implemented by the students.
 
 It uses Maven to manage its dependencies.
+
+### JDK
+
+Download JDK 19 from [https://jdk.java.net/19/](https://jdk.java.net/19/). When working for multiple
+java version, it's advised to use tools for version management. [SDK Man](https://sdkman.io/) is one of the most common one.
 
 ### Compiling the project
 
@@ -42,6 +46,19 @@ aims at providing safer alternatives, but there are not ready yet.
 
 ### Running unit tests
 
+Testing f
+
 ```bash
 mvn test
 ```
+
+Tasks
+-----------
+
+2. [x] Implement a simple In-memory database (Mahieddine)
+3. [ ] Implement vector operations using Panama API
+5. [ ] Use Panama foreign Memory API for direct memory allocation
+4. [ ] Benchmark your code (can be done while implementing the prototype)
+* Use [JMH](https://www.supinfo.com/articles/single/9474-microbenchmarking-java-avec-jmh)
+  (steps to define by Mahieddine)
+5. [ ] Create new prototypes of Vector API

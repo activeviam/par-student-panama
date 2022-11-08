@@ -155,31 +155,241 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 
 	@Override
 	public void plus(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ UNSAFE.getInt(rghtPos));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							+ UNSAFE.getInt(rghtPos + (1 * (1 << 2))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							+ UNSAFE.getInt(rghtPos + (2 * (1 << 2))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							+ UNSAFE.getInt(rghtPos + (3 * (1 << 2))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ UNSAFE.getInt(rghtPos));
+		}
 
 	}
 
 	@Override
 	public void plusPositiveValues(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ Math.max(0, UNSAFE.getInt(rghtPos)));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							+ Math.max(0, UNSAFE.getInt(rghtPos + (1 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							+ Math.max(0, UNSAFE.getInt(rghtPos + (2 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							+ Math.max(0, UNSAFE.getInt(rghtPos + (3 * (1 << 2)))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ Math.max(0, UNSAFE.getInt(rghtPos)));
+		}
 
 	}
 
 	@Override
 	public void plusNegativeValues(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ Math.min(0, UNSAFE.getInt(rghtPos)));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							+ Math.min(0, UNSAFE.getInt(rghtPos + (1 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							+ Math.min(0, UNSAFE.getInt(rghtPos + (2 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							+ Math.min(0, UNSAFE.getInt(rghtPos + (3 * (1 << 2)))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							+ Math.min(0, UNSAFE.getInt(rghtPos)));
+		}
 
 	}
 
 	@Override
 	public void minus(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- UNSAFE.getInt(rghtPos));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							- UNSAFE.getInt(rghtPos + (1 * (1 << 2))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							- UNSAFE.getInt(rghtPos + (2 * (1 << 2))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							- UNSAFE.getInt(rghtPos + (3 * (1 << 2))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- UNSAFE.getInt(rghtPos));
+		}
 
 	}
 
 	@Override
 	public void minusPositiveValues(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- Math.max(0, UNSAFE.getInt(rghtPos)));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							- Math.max(0, UNSAFE.getInt(rghtPos + (1 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							- Math.max(0, UNSAFE.getInt(rghtPos + (2 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							- Math.max(0, UNSAFE.getInt(rghtPos + (3 * (1 << 2)))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- Math.max(0, UNSAFE.getInt(rghtPos)));
+		}
 
 	}
 
 	@Override
 	public void minusNegativeValues(IVector vector) {
+		final int length = vector.size();
+		checkIndex(0, length);
+
+		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final int rghtLen = vector.size();
+		final IBlock leftBlock = this.block;
+		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
+		long lftPos = getPos((ADirectVectorBlock) leftBlock, 2);
+		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
+		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
+		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- Math.min(0, UNSAFE.getInt(rghtPos)));
+			UNSAFE.putInt(
+					lftPos + (1 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (1 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (2 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (2 * (1 << 2)))));
+			UNSAFE.putInt(
+					lftPos + (3 * (1 << 2)),
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (3 * (1 << 2)))));
+		}
+
+		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
+			UNSAFE.putInt(
+					lftPos,
+					UNSAFE.getInt(lftPos)
+							- Math.min(0, UNSAFE.getInt(rghtPos)));
+		}
 
 	}
 

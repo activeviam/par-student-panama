@@ -55,10 +55,17 @@ mvn test
 Tasks
 -----------
 
-2. [x] Implement a simple In-memory database (Mahieddine)
-3. [ ] Implement vector operations using Panama API
-5. [ ] Use Panama foreign Memory API for direct memory allocation
-4. [ ] Benchmark your code (can be done while implementing the prototype)
-* Use [JMH](https://www.supinfo.com/articles/single/9474-microbenchmarking-java-avec-jmh)
-  (steps to define by Mahieddine)
-5. [ ] Create new prototypes of Vector API
+1. [x] Implement a simple In-memory database (Mahieddine)
+2. Panama exploration
+ * [ ] Check if we can load off-heap vectors directly into panama vector API (Foreign Memory API [example](see https://openjdk.org/jeps/424)) (students)
+ * [ ] Create a dedicated off heap allocator using Segments (students)
+ * [ ] Write test suite for vector operations (mahieddine) 
+ * [ ] Rewrite `DirectDoubleVectorBlock` and `DirectIntegerVector` operations using panama API (students)
+ * [ ] Write a `DirectMemoryAllocator` using `MemorySegments` (students). It will be nice to compare allocation performance between the new allocator and the `Unsafe` allocator.
+3. [ ] Benchmark your code (can be done while implementing the prototype)
+ * Use [JMH](https://www.baeldung.com/java-microbenchmark-harness). Additional, materials can be found on official [JMH page](https://github.com/openjdk/jmh).
+ * Use [JITWatch](https://github.com/AdoptOpenJDK/jitwatch) to analyze the HotSpotJIT compiler.
+ * For further analysis, one can use Intel [VTune profiler](https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top/analyze-performance/code-profiling-scenarios/java-code-analysis.html). Careful,
+it works only with Oracle or OpenJDK and on Linux only.
+ * Virtual azure machine with SIMD instruction and benchmark template.
+4. [ ] Create new prototypes of Vector API

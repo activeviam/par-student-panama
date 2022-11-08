@@ -187,10 +187,9 @@ public class ArrayDoubleVector extends AArrayVector {
 
 		final double[] rightArray = ((ArrayDoubleVector) vector).getUnderlying();
 		final double[] leftArray = getUnderlying();
-		for (int i = 0; i < length; ++i) {
-			leftArray[i] = rightArray[i];
+		if (length >= 0) {
+			System.arraycopy(rightArray, 0, leftArray, 0, length);
 		}
-
 	}
 
 	@Override

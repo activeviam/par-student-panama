@@ -27,7 +27,7 @@ public class DoubleFixedBlockVector extends AFixedBlockVector {
 	 * @param position the position in the block at which one can find the first component of the vector
 	 * @param length the length of the vector
 	 */
-	public DoubleFixedBlockVector(IBlock block, int position, int length) {
+	public DoubleFixedBlockVector(ADirectVectorBlock block, int position, int length) {
 		super(block, position, length);
 	}
 
@@ -83,15 +83,37 @@ public class DoubleFixedBlockVector extends AFixedBlockVector {
 	}
 
 	@Override
+	public void copyFrom(double[] src) {
+		checkIndex(0, src.length);
+		this.block.write(position, src);
+	}
+
+	@Override
+	public void copyFrom(float[] src) {
+		checkIndex(0, src.length);
+		this.block.write(position, src);
+	}
+
+	@Override
+	public void copyFrom(long[] src) {
+		checkIndex(0, src.length);
+		this.block.write(position, src);
+	}
+
+	@Override
+	public void copyFrom(int[] src) {
+		checkIndex(0, src.length);
+		this.block.write(position, src);
+	}
+
+	@Override
 	public Double read(final int index) {
-		// readDouble will check for fencing
 		return readDouble(index);
 	}
 
 	@Override
 	public double readDouble(final int index) {
 		checkIndex(index);
-		// getBlock will check for fencing
 		return this.block.readDouble(this.position + index);
 	}
 
@@ -104,31 +126,26 @@ public class DoubleFixedBlockVector extends AFixedBlockVector {
 
 	@Override
 	public void writeInt(final int index, final int value) {
-		// writeDouble will check for fencing
 		writeDouble(index, value);
 	}
 
 	@Override
 	public void writeLong(final int index, final long value) {
-		// writeDouble will check for fencing
 		writeDouble(index, value);
 	}
 
 	@Override
 	public void writeFloat(final int index, final float value) {
-		// writeDouble will check for fencing
 		writeDouble(index, value);
 	}
 
 	@Override
 	public void addFloat(final int position, final float addedValue) {
-		// writeDouble will check for fencing
 		writeDouble(position, readDouble(position) + addedValue);
 	}
 
 	@Override
 	public void addDouble(final int position, final double addedValue) {
-		// writeDouble will check for fencing
 		writeDouble(position, readDouble(position) + addedValue);
 	}
 

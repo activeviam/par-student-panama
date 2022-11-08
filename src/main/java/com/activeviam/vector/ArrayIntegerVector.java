@@ -83,6 +83,11 @@ public class ArrayIntegerVector extends AArrayVector {
 	}
 
 	@Override
+	public int readInt(final int index) {
+		return underlying[index];
+	}
+
+	@Override
 	public double readDouble(final int index) {
 		return this.underlying[index];
 	}

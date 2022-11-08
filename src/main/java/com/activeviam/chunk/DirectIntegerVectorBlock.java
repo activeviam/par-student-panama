@@ -41,6 +41,11 @@ public class DirectIntegerVectorBlock extends ADirectVectorBlock {
 	}
 
 	@Override
+	public int readInt(int position) {
+		return UNSAFE.getInt(getAddress() + (position << 2));
+	}
+
+	@Override
 	public void write(final int position, final int[] src) {
 		// Don't use Unsafe.copyMemory : there is no reason for the GC to not move things while
 		// we are reading.

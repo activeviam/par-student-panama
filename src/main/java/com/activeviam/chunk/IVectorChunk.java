@@ -14,7 +14,7 @@ import com.activeviam.vector.IVector;
  *
  * @author ActiveViam
  */
-public interface IVectorChunk extends IChunk {
+public interface IVectorChunk extends IChunk, AutoCloseable {
 
 	/**
 	 * Writes an object of type vector at the given position.

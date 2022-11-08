@@ -9,8 +9,8 @@ package com.activeviam.vector;
 
 import com.activeviam.Types;
 import com.activeviam.allocator.AllocationType;
-import com.activeviam.chunk.IBlock;
 import com.activeviam.chunk.ADirectVectorBlock;
+import com.activeviam.chunk.IBlock;
 import java.util.Arrays;
 
 /**
@@ -27,7 +27,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 	 * @param position the position in the block
 	 * @param length the length of the vector
 	 */
-	public IntegerFixedBlockVector(IBlock block, int position, int length) {
+	public IntegerFixedBlockVector(ADirectVectorBlock block, int position, int length) {
 		super(block, position, length);
 	}
 
@@ -49,11 +49,17 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 	}
 
 	@Override
+	public void copyFrom(int[] src) {
+		checkIndex(0, src.length);
+		this.block.write(position, src);
+	}
+
+	@Override
 	public void copyFrom(IVector vector) {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -61,56 +67,56 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final long maxPos = getMaxPos(rghtPos, rghtLen, 2);
 		final long maxUnroll = getMaxUnroll(rghtPos, rghtLen, 2, 16);
 		for (; rghtPos < maxUnroll; rghtPos += 16, lftPos += 16) {
-			UNSAFE.putDouble(
+			UNSAFE.putInt(
 					lftPos,
-					UNSAFE.getDouble(rghtPos));
-			UNSAFE.putDouble(
+					UNSAFE.getInt(lftPos)
+							- Math.min(0, UNSAFE.getInt(rghtPos)));
+			UNSAFE.putInt(
 					lftPos + (1 * (1 << 2)),
-					UNSAFE.getDouble(rghtPos + (1 * (1 << 2))));
-			UNSAFE.putDouble(
+					UNSAFE.getInt(lftPos + (1 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (1 * (1 << 2)))));
+			UNSAFE.putInt(
 					lftPos + (2 * (1 << 2)),
-					UNSAFE.getDouble(rghtPos + (2 * (1 << 2))));
-			UNSAFE.putDouble(
+					UNSAFE.getInt(lftPos + (2 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (2 * (1 << 2)))));
+			UNSAFE.putInt(
 					lftPos + (3 * (1 << 2)),
-					UNSAFE.getDouble(rghtPos + (3 * (1 << 2))));
+					UNSAFE.getInt(lftPos + (3 * (1 << 2)))
+							- Math.min(0, UNSAFE.getInt(rghtPos + (3 * (1 << 2)))));
 		}
 
 		for (; rghtPos < maxPos; rghtPos += 1 << 2, lftPos += 1 << 2) {
-			UNSAFE.putDouble(
+			UNSAFE.putInt(
 					lftPos,
-					UNSAFE.getDouble(rghtPos));
+					UNSAFE.getInt(lftPos)
+							- Math.min(0, UNSAFE.getInt(rghtPos)));
 		}
 
 	}
 
 	@Override
 	public Integer read(final int index) {
-		// readInt will check for fencing
 		return readInt(index);
 	}
 
 	@Override
 	public int readInt(final int index) {
 		checkIndex(index);
-		// getBlock will check for fencing
 		return this.block.readInt(this.position + index);
 	}
 
 	@Override
 	public long readLong(final int index) {
-		// readInt will check for fencing
 		return readInt(index);
 	}
 
 	@Override
 	public float readFloat(final int index) {
-		// readInt will check for fencing
 		return readInt(index);
 	}
 
 	@Override
 	public double readDouble(final int index) {
-		// readInt will check for fencing
 		return readInt(index);
 	}
 
@@ -124,7 +130,6 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 	@Override
 	public void writeInt(final int index, final int value) {
 		checkIndex(index);
-		// getBlock will check for fencing
 		this.block.writeInt(this.position + index, value);
 	}
 
@@ -157,8 +162,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 	public void plus(IVector vector) {
 		final int length = vector.size();
 		checkIndex(0, length);
-
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -198,7 +202,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -238,7 +242,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -278,7 +282,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -318,7 +322,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);
@@ -358,7 +362,7 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		final int length = vector.size();
 		checkIndex(0, length);
 
-		final IBlock rightBlock = ((DoubleFixedBlockVector) vector).block;
+		final IBlock rightBlock = ((IntegerFixedBlockVector) vector).block;
 		final int rghtLen = vector.size();
 		final IBlock leftBlock = this.block;
 		long rghtPos = getPos((ADirectVectorBlock) rightBlock, 2);

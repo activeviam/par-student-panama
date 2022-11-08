@@ -8,8 +8,8 @@
 package com.activeviam.vector;
 
 import com.activeviam.UnsafeUtil;
-import com.activeviam.chunk.IBlock;
 import com.activeviam.chunk.ADirectVectorBlock;
+import com.activeviam.chunk.IBlock;
 import com.activeviam.iterator.IPrimitiveIterator;
 
 /**
@@ -31,7 +31,7 @@ public abstract class AFixedBlockVector extends AVector {
 
 	protected final int position;
 	protected final int length;
-	protected IBlock block;
+	protected ADirectVectorBlock block;
 
 	/**
 	 * Constructor.
@@ -40,7 +40,7 @@ public abstract class AFixedBlockVector extends AVector {
 	 * @param position the position at which the vector starts in the block
 	 * @param length the number of components in the vector
 	 */
-	protected AFixedBlockVector(IBlock block, int position, int length) {
+	protected AFixedBlockVector(ADirectVectorBlock block, int position, int length) {
 		this.block = block;
 		this.position = position;
 		this.length = length;
@@ -258,7 +258,7 @@ public abstract class AFixedBlockVector extends AVector {
 	 */
 	protected static long getPos(final ADirectVectorBlock block, final int posToIncOrder) {
 
-		return block.getAddress() + (1 << posToIncOrder);
+		return block.getAddress();
 	}
 
 	/**
@@ -291,4 +291,7 @@ public abstract class AFixedBlockVector extends AVector {
 		return pos + (((len << posToIncOrder) / increment) * increment);
 	}
 
+	public void release() {
+		this.block.close();
+	}
 }

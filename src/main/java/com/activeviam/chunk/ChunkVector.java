@@ -9,9 +9,9 @@ package com.activeviam.chunk;
 
 import com.activeviam.Types;
 import com.activeviam.allocator.AllocationType;
+import com.activeviam.vector.AFixedBlockVector;
 import com.activeviam.vector.IVector;
 import com.activeviam.vector.VectorFinalizer;
-import java.io.Closeable;
 import java.lang.ref.WeakReference;
 import java.util.Arrays;
 
@@ -20,7 +20,7 @@ import java.util.Arrays;
  *
  * @author ActiveViam
  */
-public class ChunkVector implements IVectorChunk, Closeable {
+public class ChunkVector implements IVectorChunk {
 
 	private final transient IChunkAllocator allocator;
 	private final IVector[] vectors;
@@ -108,6 +108,12 @@ public class ChunkVector implements IVectorChunk, Closeable {
 					// reallocate on-heap vectors to direct memory if the chunk is off-heap
 					vectorToWrite = cloneVector(vectorToWrite);
 				}
+			}
+		}
+		if (!isNull(position)) {
+			final var currentVector = this.vectors[position];
+			if (currentVector instanceof AFixedBlockVector) {
+				((AFixedBlockVector) currentVector).release();
 			}
 		}
 		this.vectors[position] = vectorToWrite;

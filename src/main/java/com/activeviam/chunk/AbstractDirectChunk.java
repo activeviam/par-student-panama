@@ -8,9 +8,8 @@
 package com.activeviam.chunk;
 
 import com.activeviam.allocator.MemoryAllocator;
-import java.io.Closeable;
 
-abstract class AbstractDirectChunk implements IChunk, Closeable {
+abstract class AbstractDirectChunk implements IChunk, AutoCloseable {
 
 	private final int capacity;
 	private final MemoryAllocator allocator;

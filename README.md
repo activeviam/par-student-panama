@@ -69,3 +69,10 @@ Tasks
 it works only with Oracle or OpenJDK and on Linux only.
  * Virtual azure machine with SIMD instruction and benchmark template.
 4. [ ] Create new prototypes of Vector API
+
+Useful Links
+-----------
+
+* Enable [JIT compilation logs](https://www.baeldung.com/jvm-tiered-compilation) using `-XX:+PrintCompilation`
+* Print assembly code for bytecoded and native methods using `-XX:PrintAssembly` and `-XX:CompileCommand=print` [documentation](https://wiki.openjdk.org/display/HotSpot/PrintAssembly).
+* There are two additional documents for debugging tips in the documentation folder.

@@ -13,6 +13,12 @@ package com.activeviam;
 public enum Types {
 
 	DOUBLE,
-	INTEGER
-
+	INTEGER;
+	
+	public static int getSize(Types type) {
+		return switch(type) {
+			case DOUBLE -> 8;
+			case INTEGER -> 4;
+		};
+	}
 }

@@ -22,13 +22,6 @@ public abstract class AFixedBlockVector extends AVector {
 	/** Unsafe provider. */
 	protected static final sun.misc.Unsafe UNSAFE = UnsafeUtil.getUnsafe();
 
-	/**
-	 * Counter of reference to this vector (i.e. the number of chunks it is written on). If the counter reaches
-	 * zero, this vector is considered as dead, it will drop to acquire it has taken on its own block at the
-	 * allocation time.
-	 */
-	protected volatile int refCount;
-
 	protected final int position;
 	protected final int length;
 	protected ADirectVectorBlock block;

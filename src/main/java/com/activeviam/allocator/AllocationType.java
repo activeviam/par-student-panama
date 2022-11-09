@@ -23,5 +23,10 @@ public enum AllocationType {
 	 * The data is allocated on the direct memory.
 	 */
 	DIRECT,
+	
+	/**
+	 * The data is allocated off-heap, using the MemorySegment API.
+	 */
+	SEGMENT,
 
 }

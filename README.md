@@ -76,3 +76,4 @@ Useful Links
 * Enable [JIT compilation logs](https://www.baeldung.com/jvm-tiered-compilation) using `-XX:+PrintCompilation`
 * Print assembly code for bytecoded and native methods using `-XX:PrintAssembly` and `-XX:CompileCommand=print` [documentation](https://wiki.openjdk.org/display/HotSpot/PrintAssembly).
 * There are two additional documents for debugging tips in the documentation folder.
+* [JIT loop unrolling, auto-vectorization vs Vector API](https://medium.com/@Styp/auto-vectorization-how-to-get-beaten-by-compiler-optimization-java-jit-vector-api-92c72b97fba3)

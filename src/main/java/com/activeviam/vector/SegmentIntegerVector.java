@@ -13,6 +13,7 @@ import com.activeviam.chunk.ADirectVectorBlock;
 import com.activeviam.chunk.IBlock;
 import com.activeviam.chunk.SegmentIntegerBlock;
 import jdk.incubator.vector.IntVector;
+import jdk.incubator.vector.VectorOperators;
 import jdk.incubator.vector.VectorSpecies;
 
 import java.lang.foreign.MemorySegment;
@@ -70,6 +71,12 @@ public class SegmentIntegerVector extends ASegmentVector {
 			block.getSegment(),
 			(long) position * 4,
 			(long) length * 4);
+	}
+	
+	@Override
+	public void copyTo(int[] dst) {
+		checkIndex(0, dst.length);
+		this.block.transfer(position, dst);
 	}
 
 	@Override
@@ -204,5 +211,13 @@ public class SegmentIntegerVector extends ASegmentVector {
 			putSimd(i, getSimd(i).sub(right.getSimd(i).min(0)));
 		}
 	}
-
+	
+	@Override
+	public int sumInt() {
+		int sum = 0;
+		for(int i = 0; i < length; i += VECTOR_STEP) {
+			sum += getSimd(i).reduceLanes(VectorOperators.ADD);
+		}
+		return sum;
+	}
 }

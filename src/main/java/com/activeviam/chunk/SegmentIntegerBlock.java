@@ -15,7 +15,7 @@ import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 
 public class SegmentIntegerBlock extends ASegmentBlock {
-	protected SegmentIntegerBlock(MemorySession session, int capacity) {
+	public SegmentIntegerBlock(MemorySession session, int capacity) {
 		super(session, Types.INTEGER, capacity);
 	}
 	

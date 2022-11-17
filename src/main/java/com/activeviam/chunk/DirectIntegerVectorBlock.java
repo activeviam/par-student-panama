@@ -34,6 +34,15 @@ public class DirectIntegerVectorBlock extends ADirectVectorBlock {
 			dest[i] = UNSAFE.getInt(ptr);
 		}
 	}
+	
+	@Override
+	public void transfer(final int position, final int[] dest) {
+		final int lgth = dest.length;
+		long ptr = getAddress() + (position << 2);
+		for (int i = 0; i < lgth; ++i, ptr += 4) {
+			dest[i] = UNSAFE.getInt(ptr);
+		}
+	}
 
 	@Override
 	public double readDouble(final int position) {
@@ -43,6 +52,11 @@ public class DirectIntegerVectorBlock extends ADirectVectorBlock {
 	@Override
 	public int readInt(int position) {
 		return UNSAFE.getInt(getAddress() + (position << 2));
+	}
+	
+	@Override
+	public void writeInt(int position, int value) {
+		UNSAFE.putInt(getAddress() + (position << 2), value);
 	}
 
 	@Override

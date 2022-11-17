@@ -7,7 +7,7 @@ import com.activeviam.iterator.IPrimitiveIterator;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
 
-public class ASegmentBlock implements IBlock {
+public abstract class ASegmentBlock implements IBlock, IChunk {
 	protected final MemorySegment segment;
 	private final Types type;
 	private final int capacity;
@@ -207,9 +207,29 @@ public class ASegmentBlock implements IBlock {
 	public int quantileInt(int position, int lgth, double r) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public int quantileIndex(int position, int lgth, double r) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public double readDouble(int position) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void writeDouble(int position, double value) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public int readInt(int position) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public void writeInt(int position, int value) {
 		throw new UnsupportedOperationException();
 	}
 }

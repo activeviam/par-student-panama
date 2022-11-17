@@ -14,15 +14,10 @@ import com.activeviam.vector.IVectorAllocator;
 import java.math.BigDecimal;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
+
+import org.openjdk.jmh.annotations.*;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Abstract for measuring the performances of the IVector interface's implementations.
@@ -30,14 +25,17 @@ import org.openjdk.jmh.annotations.TearDown;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public abstract class AJmhBenchmarkVector {
+@Warmup(iterations = 4, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Fork(1)
+public class AJmhBenchmarkVector {
 
 	protected static final int cstValue = 1;
 
 	/**
 	 * Size of the tested vector.
 	 */
-	@Param({"1000", "100000"/* , "10000000" *//* ,"100000000" */})
+	@Param({"1000"/*, "100000"*//* , "10000000" *//* ,"100000000" */})
 	protected static int VECTOR_SIZE;
 
 	/**
@@ -53,7 +51,7 @@ public abstract class AJmhBenchmarkVector {
 
 	protected static int HALF_VECTOR_SIZE;
 
-	protected static final int BATCH_SIZE = 10_000;
+	protected static final int BATCH_SIZE = 1000;
 
 	protected static final int POS_CST = 3;
 

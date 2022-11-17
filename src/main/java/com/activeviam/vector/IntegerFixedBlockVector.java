@@ -93,6 +93,12 @@ public class IntegerFixedBlockVector extends AFixedBlockVector {
 		}
 
 	}
+	
+	@Override
+	public void copyTo(final int[] dst) {
+		checkIndex(0, dst.length);
+		this.block.transfer(position, dst);
+	}
 
 	@Override
 	public Integer read(final int index) {

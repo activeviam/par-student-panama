@@ -84,6 +84,7 @@
         <version>2.22.2</version>
         <configuration>
           <runOrder>random</runOrder>
+          <argLine>--add-modules jdk.incubator.vector --enable-preview</argLine>
         </configuration>
       </plugin>
     </plugins>

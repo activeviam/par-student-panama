@@ -7,12 +7,12 @@ import com.activeviam.heap.MinHeapInteger;
 import com.activeviam.heap.MinHeapIntegerWithIndices;
 import com.activeviam.iterator.IPrimitiveIterator;
 import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorMask;
 import jdk.incubator.vector.VectorSpecies;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 
 public class SegmentIntegerBlock extends ASegmentBlock {
 	public SegmentIntegerBlock(MemorySession session, int capacity) {
@@ -111,6 +111,60 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 			}
 		}
 		return heap;
+	}
+	
+	/**
+	 * Partitions a given subarray of {@code arr} into two subarrays.
+	 * A pivot value {@code p} is chosen and elements are reordered,
+	 * such that elements of the left subarray are {@code <= p},
+	 * and elements of the right subarray are {@code >= p}.
+	 * (Elements equal to the pivot can end up in either subarray.)
+	 * @param arr an array of integers
+	 * @param startIdx start index of the source subarray
+	 * @param endIdx past-the-end index of the source subarray
+	 * @return end index of the left / start index of the right subarray
+	 */
+	public static int partition(int[] arr, int startIdx, int endIdx) {
+		int pivot = arr[(startIdx+endIdx-1)/2];
+		int left = startIdx - 1;
+		int right = endIdx;
+		while(true) {
+			do { left++; } while(arr[left] < pivot);
+			do { right--; } while(arr[right] > pivot);
+			if(left >= right) {
+				return right + 1;
+			}
+			int tmp = arr[left];
+			arr[left] = arr[right];
+			arr[right] = tmp;
+		}
+	}
+	
+	/**
+	 * Returns an array composed of the k biggest elements in the
+	 * block between {@code position} and {@code position + lgth}.
+	 * Unlike, {@code topK}, the result of this method is in no particular order.
+	 *
+	 * @param position the starting position
+	 * @param lgth the number of elements
+	 * @param k the number of elements to return
+	 * @return an array containing the k biggest elements
+	 */
+	public int[] quickTopK(int position, int lgth, int k) {
+		var arr = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partition(arr, startIdx, endIdx);
+			if(partitionIdx < lgth - k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > lgth - k) {
+				endIdx = partitionIdx;
+			} else {
+				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
 	}
 	
 	protected MinHeapIntegerWithIndices topKIndicesHeap(int position, int lgth, int k) {

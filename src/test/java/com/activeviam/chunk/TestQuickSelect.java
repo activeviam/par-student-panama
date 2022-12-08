@@ -4,14 +4,17 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.foreign.MemorySession;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class TestQuickSelect {
 	private void testPartition(int[] arr, int[] expectedArr, int expectedPartition) {
 		int pivotIdx = SegmentIntegerBlock.partition(arr, 0, arr.length);
-		assertThat(Arrays.equals(arr, expectedArr) && pivotIdx == expectedPartition);
+		assertArrayEquals(arr, expectedArr);
+		assertEquals(pivotIdx, expectedPartition);
 	}
 	
 	@Test
@@ -55,16 +58,6 @@ public class TestQuickSelect {
 		);
 	}
 	
-	private void testQuickTopK(int[] src, int k, int[] expectedTopK) {
-		try(var session = MemorySession.openConfined()) {
-			var block = new SegmentIntegerBlock(session, src.length);
-			block.write(0, src);
-			int[] topK = block.quickTopK(0, src.length, k);
-			Arrays.sort(topK);
-			assertThat(Arrays.equals(topK, expectedTopK));
-		}
-	}
-	
 	private void testQuickTopKRandom(int n, int k, int scale) {
 		int[] src = new int[n];
 		for(int i = 0; i < n; i++) {
@@ -73,29 +66,96 @@ public class TestQuickSelect {
 		
 		int[] copy = Arrays.copyOf(src, n);
 		Arrays.sort(copy);
-		int[] topK = Arrays.copyOfRange(copy, n - k, n);
+		int[] expectedTopK = Arrays.copyOfRange(copy, n - k, n);
 		
-		testQuickTopK(src, k, topK);
+		try(var session = MemorySession.openConfined()) {
+			var block = new SegmentIntegerBlock(session, src.length);
+			block.write(0, src);
+			
+			int[] topK = block.quickTopK(0, src.length, k);
+			// Sort values before comparing, as any order is considered valid.
+			Arrays.sort(topK);
+			assertArrayEquals(topK, expectedTopK);
+		}
 	}
 	
 	@Test
 	public void testQuickTopK1() {
-		testQuickTopK(
-			new int[] { 1, 2, 3, 4, 5, 6, 7 },
-			3,
-			new int[] { 5, 6, 7 }
-		);
+		testQuickTopKRandom(20, 3, 40);
 	}
 	@Test
 	public void testQuickTopK2() {
-		testQuickTopKRandom(20, 3, 40);
+		testQuickTopKRandom(20, 3, 5);
 	}
 	@Test
 	public void testQuickTopK3() {
 		testQuickTopKRandom(1000, 100, 2000);
 	}
+	
+	private void testQuickTopKIndicesRandom(int n, int k, int scale) {
+		int[] src = new int[n];
+		for(int i = 0; i < n; i++) {
+			src[i] = (int) Math.floor(Math.random() * scale);
+		}
+		
+		int[] copy = Arrays.copyOf(src, n);
+		Arrays.sort(copy);
+		int[] expectedTopK = Arrays.copyOfRange(copy, n - k, n);
+		
+		try(var session = MemorySession.openConfined()) {
+			var block = new SegmentIntegerBlock(session, src.length);
+			block.write(0, src);
+			
+			int[] topKIndices = block.quickTopKIndices(0, src.length, k);
+			// Map to values before comparing, as indices with identical values are interchangeable.
+			int[] topK = Arrays.stream(topKIndices).map(i -> src[i]).toArray();
+			Arrays.sort(topK);
+			assertArrayEquals(topK, expectedTopK);
+		}
+	}
+	
 	@Test
-	public void testQuickTopK4() {
-		testQuickTopKRandom(20, 3, 5);
+	public void testQuickTopKIndices1() {
+		testQuickTopKIndicesRandom(20, 3, 40);
+	}
+	@Test
+	public void testQuickTopKIndices2() {
+		testQuickTopKIndicesRandom(20, 3, 5);
+	}
+	@Test
+	public void testQuickTopKIndices3() {
+		testQuickTopKIndicesRandom(1000, 100, 2000);
+	}
+	
+	private void testQuantileInt(int n, double r, int scale) {
+		int[] src = new int[n];
+		for(int i = 0; i < n; i++) {
+			src[i] = (int) Math.floor(Math.random() * scale);
+		}
+		
+		int[] copy = Arrays.copyOf(src, n);
+		Arrays.sort(copy);
+		int expectedQuantile = copy[(int) Math.ceil(n * r)];
+		
+		try(var session = MemorySession.openConfined()) {
+			var block = new SegmentIntegerBlock(session, src.length);
+			block.write(0, src);
+			
+			int quantile = block.quantileInt(0, src.length, r);
+			assertEquals(quantile, expectedQuantile);
+		}
+	}
+	
+	@Test
+	public void testQuantileInt1() {
+		testQuantileInt(20, 0.25, 40);
+	}
+	@Test
+	public void testQuantileInt2() {
+		testQuantileInt(20, 0.5, 5);
+	}
+	@Test
+	public void testQuantileInt3() {
+		testQuantileInt(1000, 0.9, 2000);
 	}
 }

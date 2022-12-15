@@ -14,7 +14,7 @@ import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import java.util.Arrays;
 
-public class SegmentIntegerBlock extends ASegmentBlock {
+public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	public SegmentIntegerBlock(MemorySession session, int capacity) {
 		super(session, Types.INTEGER, capacity);
 	}

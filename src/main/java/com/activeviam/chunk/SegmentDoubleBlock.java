@@ -11,7 +11,7 @@ import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 
-public class SegmentDoubleBlock extends ASegmentBlock {
+public class SegmentDoubleBlock extends ASegmentBlock implements DoubleChunk{
 	protected SegmentDoubleBlock(MemorySession session, int capacity) {
 		super(session, Types.DOUBLE, capacity);
 	}

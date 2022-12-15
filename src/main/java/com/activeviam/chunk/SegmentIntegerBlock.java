@@ -6,12 +6,12 @@ import com.activeviam.heap.MaxHeapIntegerWithIndices;
 import com.activeviam.heap.MinHeapInteger;
 import com.activeviam.heap.MinHeapIntegerWithIndices;
 import com.activeviam.iterator.IPrimitiveIterator;
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.*;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
@@ -116,8 +116,8 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	/**
 	 * Partitions a given subarray of {@code arr} into two subarrays.
 	 * A pivot value {@code p} is chosen and elements are reordered,
-	 * such that elements of the left subarray are {@code <= p},
-	 * and elements of the right subarray are {@code >= p}.
+	 * such that elements in the left subarray are {@code <= p},
+	 * and elements in the right subarray are {@code >= p}.
 	 * (Elements equal to the pivot can end up in either subarray.)
 	 * @param arr an array of integers
 	 * @param startIdx start index of the source subarray
@@ -131,13 +131,76 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		while(true) {
 			do { left++; } while(arr[left] < pivot);
 			do { right--; } while(arr[right] > pivot);
-			if(left >= right) {
-				return right + 1;
-			}
+			if(left >= right) return right + 1;
 			int tmp = arr[left];
 			arr[left] = arr[right];
 			arr[right] = tmp;
 		}
+	}
+	
+	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
+	public static final int VECTOR_LANES = VECTOR_SPECIES.length();
+	private static final int intMask = (1 << VECTOR_LANES) - 1;
+	private static final IntVector[] PERM_TABLE = new IntVector[1 << VECTOR_LANES];
+	static {
+		for(int mask = 0; mask <= intMask; mask++) {
+			var indices = new int[VECTOR_LANES];
+			int j = 0;
+			for(int i = 0; i < VECTOR_LANES; i++) {
+				if(((mask >> i) & 1) == 1) {
+					indices[j++] = i;
+				}
+			}
+			PERM_TABLE[mask] = IntVector.fromArray(VECTOR_SPECIES, indices, 0);
+		}
+	}
+	
+	/**
+	 * Same as partition, but uses SIMD instructions to speed up the partitioning.
+	 */
+	public static int partitionSimd(int[] arr, int startIdx, int endIdx) {
+		int pivotIdx = (startIdx+endIdx-1)/2;
+		int pivot = arr[pivotIdx];
+		arr[pivotIdx] = arr[endIdx-1];
+		IntVector pivotV = IntVector.broadcast(VECTOR_SPECIES, pivot);
+		
+		int lesserCnt = 0;
+		int greaterCnt = 0;
+		int[] greater = new int[endIdx - startIdx];
+		
+		for(int i = startIdx; i < endIdx - 1; i += VECTOR_LANES) {
+			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
+			if(i + VECTOR_LANES > endIdx - 1) {
+				mask = VECTOR_SPECIES.indexInRange(i, endIdx - 1);
+			}
+			IntVector v = IntVector.fromArray(VECTOR_SPECIES, arr, i, mask);
+			
+			int cmpGreater = (int) v.compare(VectorOperators.GE, pivotV, mask).toLong();
+			v.rearrange(PERM_TABLE[cmpGreater].toShuffle()).intoArray(greater, greaterCnt, mask);
+			greaterCnt += Integer.bitCount(cmpGreater);
+			
+			int cmpLesser = ~cmpGreater & intMask;
+			if(i + VECTOR_LANES > startIdx) {
+				cmpLesser = (int) v.compare(VectorOperators.LT, pivotV, mask).toLong();
+			}
+			v.rearrange(PERM_TABLE[cmpLesser].toShuffle()).intoArray(arr, startIdx + lesserCnt, mask);
+			lesserCnt += Integer.bitCount(cmpLesser);
+		}
+		
+		arr[startIdx + lesserCnt] = pivot;
+		
+		for(int i = 0; i < greaterCnt; i += VECTOR_LANES) {
+			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
+			if(i + VECTOR_LANES > greaterCnt) {
+				mask = VECTOR_SPECIES.indexInRange(i, greaterCnt);
+			}
+			IntVector.fromArray(VECTOR_SPECIES, greater, i, mask)
+				.intoArray(arr, startIdx + lesserCnt + 1 + i, mask);
+		}
+		
+		if(lesserCnt == 0) // Pivot was smallest element; skip it to avoid infinite recursion
+			return startIdx + 1;
+		return startIdx + lesserCnt;
 	}
 	
 	/**
@@ -156,7 +219,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
-			int partitionIdx = partition(arr, startIdx, endIdx);
+			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
 			if(partitionIdx < lgth - k) {
 				startIdx = partitionIdx;
 			} else if(partitionIdx > lgth - k) {
@@ -187,6 +250,58 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		heap.sort();
 		return heap.getArrayIndices();
 	}
+	
+	/**
+	 * Identical to {@code partition}, but elements in {@code arr} are
+	 * indices into the block, and are compared based on the corresponding values.
+	 * @param arr an array of indices into the block
+	 * @param startIdx start index of the source subarray
+	 * @param endIdx past-the-end index of the source subarray
+	 * @return end index of the left / start index of the right subarray
+	 */
+	public int partitionIndices(int[] arr, int startIdx, int endIdx) {
+		int pivot = readInt(arr[(startIdx+endIdx-1)/2]);
+		int left = startIdx - 1;
+		int right = endIdx;
+		while(true) {
+			do { left++; } while(readInt(arr[left]) < pivot);
+			do { right--; } while(readInt(arr[right]) > pivot);
+			if(left >= right) return right + 1;
+			int tmp = arr[left];
+			arr[left] = arr[right];
+			arr[right] = tmp;
+		}
+	}
+	
+	/**
+	 * Returns an array composed of the indices of the k biggest elements in the
+	 * block between {@code position} and {@code position + lgth}.
+	 * Unlike, {@code topK}, the result of this method is in no particular order.
+	 *
+	 * @param position the starting position
+	 * @param lgth the number of elements
+	 * @param k the number of elements to return
+	 * @return an array containing the k biggest elements
+	 */
+	public int[] quickTopKIndices(int position, int lgth, int k) {
+		var arr = new int[lgth];
+		for(int i = 0; i < lgth; i++) {
+			arr[i] = position + i;
+		}
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partitionIndices(arr, startIdx, endIdx);
+			if(partitionIdx < lgth - k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > lgth - k) {
+				endIdx = partitionIdx;
+			} else {
+				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
+	}
+	
 	
 	@Override
 	public IPrimitiveIterator bottomK(int position, int lgth, int k) {
@@ -233,10 +348,21 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
 		}
-		if (r >= 0.5) {
-			return topK(position, lgth, lgth - nearestRank(lgth, r) + 1).nextInt();
-		} else {
-			return bottomK(position, lgth, nearestRank(lgth, r)).nextInt();
+		int k = nearestRank(lgth, r);
+		var arr = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
+			if(partitionIdx <= k) {
+				startIdx = partitionIdx;
+			} else {
+				endIdx = partitionIdx;
+			}
+			if(startIdx == k && endIdx == k+1) {
+				return arr[k];
+			}
 		}
 	}
 	
@@ -245,14 +371,24 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
 		}
-		if (r >= 0.5) {
-			return topKIndicesHeap(position, lgth, lgth - nearestRank(lgth, r) + 1).peekIndex();
-		} else {
-			return bottomKIndicesHeap(position, lgth, nearestRank(lgth, r)).peekIndex();
+		int k = nearestRank(lgth, r);
+		var arr = new int[lgth];
+		for(int i = 0; i < lgth; i++) {
+			arr[i] = position + i;
+		}
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partitionIndices(arr, startIdx, endIdx);
+			if(partitionIdx < k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > k) {
+				endIdx = partitionIdx;
+			} else {
+				return arr[k];
+			}
 		}
 	}
-	
-	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
 	
 	public IntVector getSimd(int position, int maxPosition) {
 		if(position + VECTOR_SPECIES.length() <= maxPosition) {

@@ -9,12 +9,10 @@ package com.activeviam.vector;
 
 import com.activeviam.Types;
 import com.activeviam.allocator.AllocationType;
-import com.activeviam.chunk.ADirectVectorBlock;
 import com.activeviam.chunk.IBlock;
 import com.activeviam.chunk.SegmentIntegerBlock;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.VectorOperators;
-import jdk.incubator.vector.VectorSpecies;
 
 import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
@@ -143,7 +141,7 @@ public class SegmentIntegerVector extends ASegmentVector {
 		return new ArrayIntegerVector(toIntArray());
 	}
 	
-	public static final int VECTOR_STEP = SegmentIntegerBlock.VECTOR_SPECIES.length();
+	public static final int VECTOR_STEP = SegmentIntegerBlock.VECTOR_LANES;
 	
 	protected IntVector getSimd(int i) {
 		return ((SegmentIntegerBlock) block).getSimd(position + i, position + length);

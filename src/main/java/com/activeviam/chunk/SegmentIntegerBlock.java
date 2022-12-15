@@ -6,12 +6,12 @@ import com.activeviam.heap.MaxHeapIntegerWithIndices;
 import com.activeviam.heap.MinHeapInteger;
 import com.activeviam.heap.MinHeapIntegerWithIndices;
 import com.activeviam.iterator.IPrimitiveIterator;
-import jdk.incubator.vector.IntVector;
-import jdk.incubator.vector.VectorSpecies;
+import jdk.incubator.vector.*;
 
 import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SegmentIntegerBlock extends ASegmentBlock {
@@ -116,8 +116,8 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 	/**
 	 * Partitions a given subarray of {@code arr} into two subarrays.
 	 * A pivot value {@code p} is chosen and elements are reordered,
-	 * such that elements of the left subarray are {@code <= p},
-	 * and elements of the right subarray are {@code >= p}.
+	 * such that elements in the left subarray are {@code <= p},
+	 * and elements in the right subarray are {@code >= p}.
 	 * (Elements equal to the pivot can end up in either subarray.)
 	 * @param arr an array of integers
 	 * @param startIdx start index of the source subarray
@@ -138,6 +138,71 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 		}
 	}
 	
+	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
+	public static final int VECTOR_LANES = VECTOR_SPECIES.length();
+	private static final int intMask = (1 << VECTOR_LANES) - 1;
+	private static final IntVector[] PERM_TABLE = new IntVector[1 << VECTOR_LANES];
+	static {
+		for(int mask = 0; mask <= intMask; mask++) {
+			var indices = new int[VECTOR_LANES];
+			int j = 0;
+			for(int i = 0; i < VECTOR_LANES; i++) {
+				if(((mask >> i) & 1) == 1) {
+					indices[j++] = i;
+				}
+			}
+			PERM_TABLE[mask] = IntVector.fromArray(VECTOR_SPECIES, indices, 0);
+		}
+	}
+	
+	/**
+	 * Same as partition, but uses SIMD instructions to speed up the partitioning.
+	 */
+	public static int partitionSimd(int[] arr, int startIdx, int endIdx) {
+		int pivotIdx = (startIdx+endIdx-1)/2;
+		int pivot = arr[pivotIdx];
+		arr[pivotIdx] = arr[endIdx-1];
+		IntVector pivotV = IntVector.broadcast(VECTOR_SPECIES, pivot);
+		
+		int lesserCnt = 0;
+		int greaterCnt = 0;
+		int[] greater = new int[endIdx - startIdx];
+		
+		for(int i = startIdx; i < endIdx - 1; i += VECTOR_LANES) {
+			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
+			if(i + VECTOR_LANES > endIdx - 1) {
+				mask = VECTOR_SPECIES.indexInRange(i, endIdx - 1);
+			}
+			IntVector v = IntVector.fromArray(VECTOR_SPECIES, arr, i, mask);
+			
+			int cmpGreater = (int) v.compare(VectorOperators.GE, pivotV, mask).toLong();
+			v.rearrange(PERM_TABLE[cmpGreater].toShuffle()).intoArray(greater, greaterCnt, mask);
+			greaterCnt += Integer.bitCount(cmpGreater);
+			
+			int cmpLesser = ~cmpGreater & intMask;
+			if(i + VECTOR_LANES > startIdx) {
+				cmpLesser = (int) v.compare(VectorOperators.LT, pivotV, mask).toLong();
+			}
+			v.rearrange(PERM_TABLE[cmpLesser].toShuffle()).intoArray(arr, startIdx + lesserCnt, mask);
+			lesserCnt += Integer.bitCount(cmpLesser);
+		}
+		
+		arr[startIdx + lesserCnt] = pivot;
+		
+		for(int i = 0; i < greaterCnt; i += VECTOR_LANES) {
+			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
+			if(i + VECTOR_LANES > greaterCnt) {
+				mask = VECTOR_SPECIES.indexInRange(i, greaterCnt);
+			}
+			IntVector.fromArray(VECTOR_SPECIES, greater, i, mask)
+				.intoArray(arr, startIdx + lesserCnt + 1 + i, mask);
+		}
+		
+		if(lesserCnt == 0) // Pivot was smallest element; skip it to avoid infinite recursion
+			return startIdx + 1;
+		return startIdx + lesserCnt;
+	}
+	
 	/**
 	 * Returns an array composed of the k biggest elements in the
 	 * block between {@code position} and {@code position + lgth}.
@@ -154,7 +219,7 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
-			int partitionIdx = partition(arr, startIdx, endIdx);
+			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
 			if(partitionIdx < lgth - k) {
 				startIdx = partitionIdx;
 			} else if(partitionIdx > lgth - k) {
@@ -289,12 +354,13 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
-			int partitionIdx = partition(arr, startIdx, endIdx);
-			if(partitionIdx < k) {
+			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
+			if(partitionIdx <= k) {
 				startIdx = partitionIdx;
-			} else if(partitionIdx > k) {
-				endIdx = partitionIdx;
 			} else {
+				endIdx = partitionIdx;
+			}
+			if(startIdx == k && endIdx == k+1) {
 				return arr[k];
 			}
 		}
@@ -323,8 +389,6 @@ public class SegmentIntegerBlock extends ASegmentBlock {
 			}
 		}
 	}
-	
-	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
 	
 	public IntVector getSimd(int position, int maxPosition) {
 		if(position + VECTOR_SPECIES.length() <= maxPosition) {

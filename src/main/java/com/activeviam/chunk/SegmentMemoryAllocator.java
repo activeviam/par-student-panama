@@ -6,20 +6,23 @@ import com.activeviam.vector.IVector;
 import com.activeviam.vector.IVectorAllocator;
 import com.activeviam.vector.SegmentDoubleVector;
 import com.activeviam.vector.SegmentIntegerVector;
-import java.lang.foreign.MemorySession;
+
+import java.lang.foreign.SegmentAllocator;
 
 public class SegmentMemoryAllocator implements IChunkAllocator {
 
-    private final MemorySession session = MemorySession.openConfined();
-
+    private final SegmentAllocator allocator;
+    public SegmentMemoryAllocator(SegmentAllocator allocator) {
+        this.allocator = allocator;
+    }
     @Override
     public IntegerChunk allocateIntegerChunk(int size) {
-        return new SegmentIntegerBlock(session, size);
+        return new SegmentIntegerBlock(allocator, size);
     }
 
     @Override
     public DoubleChunk allocateDoubleChunk(int size) {
-        return new SegmentDoubleBlock(session, size);
+        return new SegmentDoubleBlock(allocator, size);
     }
 
     @Override
@@ -47,7 +50,7 @@ public class SegmentMemoryAllocator implements IChunkAllocator {
             if (length == 0) {
                 return EmptyVector.emptyVector(Types.INTEGER);
             }
-            final var block = new SegmentIntegerBlock(SegmentMemoryAllocator.this.session, length);
+            final var block = new SegmentIntegerBlock(SegmentMemoryAllocator.this.allocator, length);
             return new SegmentIntegerVector(block, 0, length);
         }
 
@@ -80,7 +83,7 @@ public class SegmentMemoryAllocator implements IChunkAllocator {
             if (length == 0) {
                 return EmptyVector.emptyVector(Types.DOUBLE);
             }
-            final var block = new SegmentDoubleBlock(SegmentMemoryAllocator.this.session, length);
+            final var block = new SegmentDoubleBlock(SegmentMemoryAllocator.this.allocator, length);
             return new SegmentDoubleVector(block, 0, length);
         }
 

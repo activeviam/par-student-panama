@@ -6,17 +6,17 @@ import com.activeviam.iterator.IPrimitiveIterator;
 
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 
 public abstract class ASegmentBlock implements IBlock, IChunk {
 	protected final MemorySegment segment;
 	private final Types type;
 	private final int capacity;
 	
-	protected ASegmentBlock(MemorySession session, Types type, int capacity) {
+	protected ASegmentBlock(SegmentAllocator allocator, Types type, int capacity) {
 		this.type = type;
 		this.capacity = capacity;
-		this.segment = MemorySegment.allocateNative(
-				(long) capacity * Types.getSize(type), session);
+		this.segment = allocator.allocate((long) capacity * Types.getSize(type));
 	}
 	
 	@Override

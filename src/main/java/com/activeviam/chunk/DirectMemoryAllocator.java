@@ -37,11 +37,6 @@ public class DirectMemoryAllocator implements IChunkAllocator {
 	}
 
 	@Override
-	public IVectorChunk allocateVectorChunk(int size, Types type) {
-		return new ChunkVector(size, type, this);
-	}
-
-	@Override
 	public IVectorAllocator getVectorAllocator(Types type) {
 		switch (type) {
 			case DOUBLE:

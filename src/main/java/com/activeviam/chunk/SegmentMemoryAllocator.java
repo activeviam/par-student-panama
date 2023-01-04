@@ -1,8 +1,11 @@
 package com.activeviam.chunk;
 
 import com.activeviam.Types;
-import com.activeviam.vector.*;
-
+import com.activeviam.vector.EmptyVector;
+import com.activeviam.vector.IVector;
+import com.activeviam.vector.IVectorAllocator;
+import com.activeviam.vector.SegmentDoubleVector;
+import com.activeviam.vector.SegmentIntegerVector;
 import java.lang.foreign.MemorySession;
 
 public class SegmentMemoryAllocator implements IChunkAllocator {
@@ -17,11 +20,6 @@ public class SegmentMemoryAllocator implements IChunkAllocator {
     @Override
     public DoubleChunk allocateDoubleChunk(int size) {
         return new SegmentDoubleBlock(session, size);
-    }
-
-    @Override
-    public IVectorChunk allocateVectorChunk(int size, Types type) {
-        return null;
     }
 
     @Override

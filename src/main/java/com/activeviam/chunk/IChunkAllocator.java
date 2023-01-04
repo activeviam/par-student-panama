@@ -12,7 +12,9 @@ public interface IChunkAllocator {
 
 	DoubleChunk allocateDoubleChunk(int size);
 
-	IVectorChunk allocateVectorChunk(int size, Types type);
+	default IVectorChunk allocateVectorChunk(int size, Types type) {
+		return new ChunkVector(size, type, this);
+	}
 
 	IVectorAllocator getVectorAllocator(Types type);
 

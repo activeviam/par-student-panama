@@ -9,14 +9,15 @@ import com.activeviam.iterator.IPrimitiveIterator;
 import jdk.incubator.vector.*;
 
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
-	public SegmentIntegerBlock(MemorySession session, int capacity) {
-		super(session, Types.INTEGER, capacity);
+	public SegmentIntegerBlock(SegmentAllocator allocator, int capacity) {
+		super(allocator, Types.INTEGER, capacity);
 	}
 	
 	@Override

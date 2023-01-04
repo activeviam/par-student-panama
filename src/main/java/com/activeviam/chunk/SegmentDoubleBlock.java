@@ -8,12 +8,13 @@ import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.VectorSpecies;
 
 import java.lang.foreign.MemorySession;
+import java.lang.foreign.SegmentAllocator;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 
 public class SegmentDoubleBlock extends ASegmentBlock implements DoubleChunk{
-	protected SegmentDoubleBlock(MemorySession session, int capacity) {
-		super(session, Types.DOUBLE, capacity);
+	protected SegmentDoubleBlock(SegmentAllocator allocator, int capacity) {
+		super(allocator, Types.DOUBLE, capacity);
 	}
 	
 	@Override

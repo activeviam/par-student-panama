@@ -149,42 +149,7 @@ public class TestQuickSelect {
 		testQuickTopK(new int[] { 1,2,0,3,4 }, 3, new int[] { 2,3,4 });
 	}
 	
-	private void testQuickTopKIndicesRandom(int n, int k, int scale) {
-		int[] src = new int[n];
-		for(int i = 0; i < n; i++) {
-			src[i] = (int) Math.floor(Math.random() * scale);
-		}
-		
-		int[] copy = Arrays.copyOf(src, n);
-		Arrays.sort(copy);
-		int[] expectedTopK = Arrays.copyOfRange(copy, n - k, n);
-		
-		try(var session = MemorySession.openConfined()) {
-			var block = new SegmentIntegerBlock(session, src.length);
-			block.write(0, src);
-			
-			int[] topKIndices = block.quickTopKIndices(0, src.length, k);
-			// Map to values before comparing, as indices with identical values are interchangeable.
-			int[] topK = Arrays.stream(topKIndices).map(i -> src[i]).toArray();
-			Arrays.sort(topK);
-			assertArrayEquals(topK, expectedTopK);
-		}
-	}
-	
-	@Test
-	public void testQuickTopKIndices1() {
-		testQuickTopKIndicesRandom(20, 3, 40);
-	}
-	@Test
-	public void testQuickTopKIndices2() {
-		testQuickTopKIndicesRandom(20, 3, 5);
-	}
-	@Test
-	public void testQuickTopKIndices3() {
-		testQuickTopKIndicesRandom(1000, 100, 2000);
-	}
-	
-	private void testQuantileInt(int n, double r, int scale) {
+	private void testQuickQuantileInt(int n, double r, int scale) {
 		int[] src = new int[n];
 		for(int i = 0; i < n; i++) {
 			src[i] = (int) Math.floor(Math.random() * scale);
@@ -198,21 +163,21 @@ public class TestQuickSelect {
 			var block = new SegmentIntegerBlock(session, src.length);
 			block.write(0, src);
 			
-			int quantile = block.quantileInt(0, src.length, r);
+			int quantile = block.quickQuantileInt(0, src.length, r);
 			assertEquals(quantile, expectedQuantile);
 		}
 	}
 	
 	@Test
-	public void testQuantileInt1() {
-		testQuantileInt(20, 0.25, 40);
+	public void testQuickQuantileInt1() {
+		testQuickQuantileInt(20, 0.25, 40);
 	}
 	@Test
-	public void testQuantileInt2() {
-		testQuantileInt(20, 0.5, 5);
+	public void testQuickQuantileInt2() {
+		testQuickQuantileInt(20, 0.5, 5);
 	}
 	@Test
-	public void testQuantileInt3() {
-		testQuantileInt(1000, 0.9, 2000);
+	public void testQuickQuantileInt3() {
+		testQuickQuantileInt(1000, 0.9, 2000);
 	}
 }

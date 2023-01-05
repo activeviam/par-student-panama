@@ -87,6 +87,27 @@
           <argLine>--add-modules jdk.incubator.vector --enable-preview</argLine>
         </configuration>
       </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <argument>--add-modules</argument>
+            <argument>jdk.incubator.vector</argument>
+            <argument>--enable-preview</argument>
+            <argument>-classpath</argument>
+            <classpath/>
+            <argument>org.openjdk.jmh.Main</argument>
+            <argument>com.activeviam.benchmark.vector.JmhBenchmarkSegmentIntegerVector.quickTopK*</argument>
+            <argument>com.activeviam.benchmark.vector.JmhBenchmarkSegmentIntegerVector.topK*</argument>
+          </arguments>
+          <workingDirectory>${project.build.directory}</workingDirectory>
+          <classpathScope>test</classpathScope>
+        </configuration>
+      </plugin>
     </plugins>
 
     <pluginManagement>

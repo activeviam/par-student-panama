@@ -220,6 +220,26 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
+			int partitionIdx = partition(arr, startIdx, endIdx);
+			if(partitionIdx < lgth - k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > lgth - k) {
+				endIdx = partitionIdx;
+			} else {
+				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
+	}
+	
+	/**
+	 * Identical to {@code quickTopK}, but uses SIMD instructions.
+	 */
+	public int[] quickTopKSimd(int position, int lgth, int k) {
+		var arr = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
 			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
 			if(partitionIdx < lgth - k) {
 				startIdx = partitionIdx;
@@ -251,58 +271,6 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		heap.sort();
 		return heap.getArrayIndices();
 	}
-	
-	/**
-	 * Identical to {@code partition}, but elements in {@code arr} are
-	 * indices into the block, and are compared based on the corresponding values.
-	 * @param arr an array of indices into the block
-	 * @param startIdx start index of the source subarray
-	 * @param endIdx past-the-end index of the source subarray
-	 * @return end index of the left / start index of the right subarray
-	 */
-	public int partitionIndices(int[] arr, int startIdx, int endIdx) {
-		int pivot = readInt(arr[(startIdx+endIdx-1)/2]);
-		int left = startIdx - 1;
-		int right = endIdx;
-		while(true) {
-			do { left++; } while(readInt(arr[left]) < pivot);
-			do { right--; } while(readInt(arr[right]) > pivot);
-			if(left >= right) return right + 1;
-			int tmp = arr[left];
-			arr[left] = arr[right];
-			arr[right] = tmp;
-		}
-	}
-	
-	/**
-	 * Returns an array composed of the indices of the k biggest elements in the
-	 * block between {@code position} and {@code position + lgth}.
-	 * Unlike, {@code topK}, the result of this method is in no particular order.
-	 *
-	 * @param position the starting position
-	 * @param lgth the number of elements
-	 * @param k the number of elements to return
-	 * @return an array containing the k biggest elements
-	 */
-	public int[] quickTopKIndices(int position, int lgth, int k) {
-		var arr = new int[lgth];
-		for(int i = 0; i < lgth; i++) {
-			arr[i] = position + i;
-		}
-		int startIdx = 0;
-		int endIdx = lgth;
-		while(true) {
-			int partitionIdx = partitionIndices(arr, startIdx, endIdx);
-			if(partitionIdx < lgth - k) {
-				startIdx = partitionIdx;
-			} else if(partitionIdx > lgth - k) {
-				endIdx = partitionIdx;
-			} else {
-				return Arrays.copyOfRange(arr, lgth - k, lgth);
-			}
-		}
-	}
-	
 	
 	@Override
 	public IPrimitiveIterator bottomK(int position, int lgth, int k) {
@@ -349,6 +317,39 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
 		}
+		if (r >= 0.5) {
+			return topK(position, lgth, lgth - nearestRank(lgth, r) + 1).nextInt();
+		} else {
+			return bottomK(position, lgth, nearestRank(lgth, r)).nextInt();
+		}
+	}
+	
+	public int quickQuantileInt(int position, int lgth, double r) {
+		if (r <= 0d || r > 1d) {
+			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
+		}
+		int k = nearestRank(lgth, r);
+		var arr = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partition(arr, startIdx, endIdx);
+			if(partitionIdx <= k) {
+				startIdx = partitionIdx;
+			} else {
+				endIdx = partitionIdx;
+			}
+			if(startIdx == k && endIdx == k+1) {
+				return arr[k];
+			}
+		}
+	}
+	
+	public int quickQuantileIntSimd(int position, int lgth, double r) {
+		if (r <= 0d || r > 1d) {
+			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
+		}
 		int k = nearestRank(lgth, r);
 		var arr = new int[lgth];
 		transfer(position, arr);
@@ -372,22 +373,10 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
 		}
-		int k = nearestRank(lgth, r);
-		var arr = new int[lgth];
-		for(int i = 0; i < lgth; i++) {
-			arr[i] = position + i;
-		}
-		int startIdx = 0;
-		int endIdx = lgth;
-		while(true) {
-			int partitionIdx = partitionIndices(arr, startIdx, endIdx);
-			if(partitionIdx < k) {
-				startIdx = partitionIdx;
-			} else if(partitionIdx > k) {
-				endIdx = partitionIdx;
-			} else {
-				return arr[k];
-			}
+		if (r >= 0.5) {
+			return topKIndicesHeap(position, lgth, lgth - nearestRank(lgth, r) + 1).peekIndex();
+		} else {
+			return bottomKIndicesHeap(position, lgth, nearestRank(lgth, r)).peekIndex();
 		}
 	}
 	

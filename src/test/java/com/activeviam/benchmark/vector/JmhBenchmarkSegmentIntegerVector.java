@@ -110,10 +110,25 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 	public void quantileInt(BenchmarkVector vector) {
 		vector.vector.quantileInt(quantile);
 	}
+	
+	@Benchmark
+	public void topK(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(vector.vector.topK(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopK(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopK(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKSimd(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimd(VECTOR_SIZE / 5));
+	}
 
 	@Benchmark
-	public void sumInt(BenchmarkVector vector) {
-		vector.vector.sumInt();
+	public void sumInt(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(vector.vector.sumInt());
 	}
 
 	@Benchmark

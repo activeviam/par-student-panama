@@ -11,6 +11,7 @@ import com.activeviam.Types;
 import com.activeviam.allocator.AllocationType;
 import com.activeviam.chunk.IBlock;
 import com.activeviam.chunk.SegmentIntegerBlock;
+import com.activeviam.iterator.IPrimitiveIterator;
 import jdk.incubator.vector.IntVector;
 import jdk.incubator.vector.VectorOperators;
 
@@ -217,5 +218,21 @@ public class SegmentIntegerVector extends ASegmentVector {
 			sum += getSimd(i).reduceLanes(VectorOperators.ADD);
 		}
 		return sum;
+	}
+	
+	public int[] quickTopK(final int k) {
+		checkIndex(0, k);
+		if (k == 0) {
+			return new int[0];
+		}
+		return ((SegmentIntegerBlock) block).quickTopK(this.position, length, k);
+	}
+	
+	public int[] quickTopKSimd(final int k) {
+		checkIndex(0, k);
+		if (k == 0) {
+			return new int[0];
+		}
+		return ((SegmentIntegerBlock) block).quickTopKSimd(this.position, length, k);
 	}
 }

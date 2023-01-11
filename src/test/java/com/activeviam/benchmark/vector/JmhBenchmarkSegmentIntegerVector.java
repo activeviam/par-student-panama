@@ -21,27 +21,6 @@ import java.util.function.IntBinaryOperator;
 
 import static com.activeviam.Types.INTEGER;
 
-/* This allocator uses MemorySession.global(). This means that chunks
- * allocated with it will never be freed. This should not be used in production! */
-class BenchmarkSegmentAllocator implements IVectorAllocator {
-	@Override
-	public IVector allocateNewVector(int length) {
-		return new SegmentIntegerVector(new SegmentIntegerBlock(MemorySession.global(), length), 0, length);
-	}
-	@Override
-	public void reallocateVector(IVector vector) {}
-	@Override
-	public IVector copy(IVector toCopy) {
-		var vec = allocateNewVector(toCopy.size());
-		vec.copyFrom(toCopy);
-		return vec;
-	}
-	@Override
-	public Types getComponentType() {
-		return INTEGER;
-	}
-}
-
 /**
  * JMH Micro Benchmark for vector DOUBLE operation performances.
  */
@@ -59,7 +38,7 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 	@Setup(Level.Trial)
 	@Override
 	public void setupVectorAllocator() {
-		VECTOR_ALLOCATOR = new BenchmarkSegmentAllocator();
+		VECTOR_ALLOCATOR = new SegmentMemoryAllocator(MemorySession.openConfined()).getVectorAllocator(INTEGER);
 	}
 	
 	@Override

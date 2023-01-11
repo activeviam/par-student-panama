@@ -46,7 +46,7 @@ public class AJmhBenchmarkVector {
 	 * <li>constant contains a single value everywhere.
 	 * </ul>
 	 */
-	@Param({"random", "constant", "sparse"})
+	@Param({"random", /* "constant", "sparse" */})
 	protected static String VECTOR_CONTENT;
 
 	protected static int HALF_VECTOR_SIZE;

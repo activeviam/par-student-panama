@@ -86,21 +86,49 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <version>3.1.0</version>
-        <configuration>
-          <executable>java</executable>
-          <arguments>
-            <argument>--add-modules</argument>
-            <argument>jdk.incubator.vector</argument>
-            <argument>--enable-preview</argument>
-            <argument>-classpath</argument>
-            <classpath/>
-            <argument>org.openjdk.jmh.Main</argument>
-            <argument>com.activeviam.benchmark.vector.JmhBenchmarkSegmentIntegerVector.quickTopK*</argument>
-            <argument>com.activeviam.benchmark.vector.JmhBenchmarkSegmentIntegerVector.topK*</argument>
-          </arguments>
-          <workingDirectory>${project.build.directory}</workingDirectory>
-          <classpathScope>test</classpathScope>
-        </configuration>
+        <executions>
+          <execution>
+            <id>run-benchmarks</id>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>--add-modules</argument>
+                <argument>jdk.incubator.vector</argument>
+                <argument>--enable-preview</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.openjdk.jmh.Main</argument>
+                <argument>${jmhArgs}</argument>
+              </arguments>
+              <classpathScope>test</classpathScope>
+            </configuration>
+          </execution>
+          <execution>
+            <id>run-benchmarks-jitwatch</id>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>--add-modules</argument>
+                <argument>jdk.incubator.vector</argument>
+                <argument>--enable-preview</argument>
+                <argument>-XX:+UnlockDiagnosticVMOptions</argument>
+                <argument>-Xlog:class+load=info</argument>
+                <argument>-XX:LogFile=benchmark_jvm.log</argument>
+                <argument>-XX:-TieredCompilation</argument>
+                <argument>-XX:+LogCompilation</argument>
+                <argument>-XX:+PrintAssembly</argument>
+                <argument>-XX:+DebugNonSafepoints</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.openjdk.jmh.Main</argument>
+                <argument>${jmhArgs}</argument>
+              </arguments>
+              <classpathScope>test</classpathScope>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
 

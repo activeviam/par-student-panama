@@ -25,8 +25,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 4, time = 100, timeUnit = MILLISECONDS)
-@Measurement(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Warmup(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class AJmhBenchmarkVector {
 
@@ -35,7 +35,7 @@ public class AJmhBenchmarkVector {
 	/**
 	 * Size of the tested vector.
 	 */
-	@Param({/*"1000", *//*"100000" ,*/"10000000"/*, "100000000"*/})
+	@Param({"1000", "100000", "10000000", "100000000"})
 	protected static int VECTOR_SIZE;
 
 	/**

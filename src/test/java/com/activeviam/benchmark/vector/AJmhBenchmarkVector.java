@@ -110,25 +110,25 @@ public class AJmhBenchmarkVector {
 	}
 
 	public static Object computeValue(Types contentType, String contentRepartition, double defaultValue) {
-		BigDecimal value;
+		double value;
 		switch (contentRepartition) {
-			case "random" -> value = BigDecimal.valueOf(Integer.MAX_VALUE * Math.random());
+			case "random" -> value = Integer.MAX_VALUE * Math.random();
 			case "sparse" -> {
 				if (Math.random() > 0.9) {
-					value = BigDecimal.valueOf(Integer.MAX_VALUE * Math.random());
+					value = Integer.MAX_VALUE * Math.random();
 				} else {
-					value = BigDecimal.valueOf(defaultValue);
+					value = defaultValue;
 				}
 			}
-			case "constant" -> value = BigDecimal.valueOf(defaultValue);
+			case "constant" -> value = defaultValue;
 			default -> throw new IllegalStateException("Unexpected contentRepartition parameter value.");
 		}
 		switch (contentType) {
 			case DOUBLE -> {
-				return value.doubleValue();
+				return value;
 			}
 			case INTEGER -> {
-				return value.intValue();
+				return (int) value;
 			}
 			default -> throw new IllegalStateException(
 					"Data creation not implemented for datatype : " + contentType + " , " + "which is : "

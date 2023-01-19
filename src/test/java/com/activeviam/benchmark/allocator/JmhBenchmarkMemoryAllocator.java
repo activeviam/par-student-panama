@@ -29,4 +29,9 @@ public class JmhBenchmarkMemoryAllocator {
             ALLOCATOR.allocateNewVector(1);
         }
     }
+
+    @Benchmark
+    public void allocateSizeVectorChunk() {
+        ALLOCATOR.allocateNewVector(NB_ALLOCATIONS * 10);
+    }
 }

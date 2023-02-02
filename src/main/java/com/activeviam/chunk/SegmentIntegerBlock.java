@@ -216,7 +216,6 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		
 		int lesserCnt = 0;
 		int greaterCnt = 0;
-		int[] greater = new int[endIdx - startIdx];
 		
 		for(int i = startIdx; i < endIdx - 1; i += VECTOR_LANES) {
 			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
@@ -226,7 +225,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			IntVector v = IntVector.fromArray(VECTOR_SPECIES, arr, i, mask);
 			
 			int cmpGreater = (int) v.compare(VectorOperators.GE, pivotV, mask).toLong();
-			v.rearrange(PERM_TABLE[cmpGreater].toShuffle()).intoArray(greater, greaterCnt, mask);
+			v.rearrange(PERM_TABLE[cmpGreater].toShuffle()).intoArray(buf, greaterCnt, mask);
 			greaterCnt += Integer.bitCount(cmpGreater);
 			
 			int cmpLesser = ~cmpGreater & intMask;
@@ -244,7 +243,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			if(i + VECTOR_LANES > greaterCnt) {
 				mask = VECTOR_SPECIES.indexInRange(i, greaterCnt);
 			}
-			IntVector.fromArray(VECTOR_SPECIES, greater, i, mask)
+			IntVector.fromArray(VECTOR_SPECIES, buf, i, mask)
 				.intoArray(arr, startIdx + lesserCnt + 1 + i, mask);
 		}
 		

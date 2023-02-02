@@ -55,6 +55,19 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 	}
 	
+	public void transferSimd(int position, int[] dest) {
+		int endIdx = position + dest.length;
+		for(int i = 0; i < dest.length; i += VECTOR_LANES) {
+			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
+			if(i + VECTOR_LANES > endIdx) {
+				mask = VECTOR_SPECIES.indexInRange(i, endIdx);
+			}
+			IntVector.fromMemorySegment(VECTOR_SPECIES, segment,
+				(long) position * 4, ByteOrder.nativeOrder(), mask)
+				.intoArray(dest, i, mask);
+		}
+	}
+	
 	@Override
 	public void write(int position, int[] src) {
 		for(int i = 0; i < src.length; i++) {
@@ -157,9 +170,45 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	}
 	
 	/**
-	 * Same as partition, but uses SIMD instructions to speed up the partitioning.
+	 * Same as {@code partition}, but uses Lomuto partition scheme for comparison.
 	 */
-	public static int partitionSimd(int[] arr, int startIdx, int endIdx) {
+	public static int partitionLomuto(int[] arr, int startIdx, int endIdx) {
+		int pivotIdx = (startIdx+endIdx-1)/2;
+		int pivot = arr[pivotIdx];
+		arr[pivotIdx] = arr[endIdx-1];
+		
+		int lesserCnt = 0;
+		int greaterCnt = 0;
+		int[] greater = new int[endIdx - startIdx];
+		
+		for(int i = startIdx; i < endIdx - 1; i++) {
+			int x = arr[i];
+			
+			if(x >= pivot) {
+				greater[greaterCnt] = x;
+				greaterCnt++;
+			} else {
+				arr[startIdx + lesserCnt] = x;
+				lesserCnt++;
+			}
+		}
+		
+		arr[startIdx + lesserCnt] = pivot;
+		
+		for(int i = 0; i < greaterCnt; i++) {
+			arr[startIdx + lesserCnt + 1 + i] = greater[i];
+		}
+		
+		if(lesserCnt == 0) // Pivot was smallest element; skip it to avoid infinite recursion
+			return startIdx + 1;
+		return startIdx + lesserCnt;
+	}
+	
+	/**
+	 * Same as {@code partitionLomuto}, but uses SIMD instructions to speed up the partitioning.
+	 * {@code buf} should be temporary storage with at least the size of {@code arr}
+	 */
+	public static int partitionSimd(int[] arr, int[] buf, int startIdx, int endIdx) {
 		int pivotIdx = (startIdx+endIdx-1)/2;
 		int pivot = arr[pivotIdx];
 		arr[pivotIdx] = arr[endIdx-1];
@@ -232,7 +281,28 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	}
 	
 	/**
-	 * Identical to {@code quickTopK}, but uses SIMD instructions.
+	 * Identical to {@code quickTopK}, but uses Lomuto partition scheme
+	 * for comparison with quickTopKSimd
+	 */
+	public int[] quickTopKLomuto(int position, int lgth, int k) {
+		var arr = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partitionLomuto(arr, startIdx, endIdx);
+			if(partitionIdx < lgth - k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > lgth - k) {
+				endIdx = partitionIdx;
+			} else {
+				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
+	}
+	
+	/**
+	 * Identical to {@code quickTopKLomuto}, but uses SIMD instructions.
 	 */
 	public int[] quickTopKSimd(int position, int lgth, int k) {
 		var arr = new int[lgth];
@@ -240,7 +310,29 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
-			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
+			var buf = new int[endIdx - startIdx];
+			int partitionIdx = partitionSimd(arr, buf, startIdx, endIdx);
+			if(partitionIdx < lgth - k) {
+				startIdx = partitionIdx;
+			} else if(partitionIdx > lgth - k) {
+				endIdx = partitionIdx;
+			} else {
+				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
+	}
+	
+	/**
+	 * Identical to {@code quickTopKSimd}, but does fewer allocations.
+	 */
+	public int[] quickTopKSimdFewAllocs(int position, int lgth, int k) {
+		var arr = new int[lgth];
+		var buf = new int[lgth];
+		transfer(position, arr);
+		int startIdx = 0;
+		int endIdx = lgth;
+		while(true) {
+			int partitionIdx = partitionSimd(arr, buf, startIdx, endIdx);
 			if(partitionIdx < lgth - k) {
 				startIdx = partitionIdx;
 			} else if(partitionIdx > lgth - k) {
@@ -352,11 +444,12 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		int k = nearestRank(lgth, r);
 		var arr = new int[lgth];
+		var buf = new int[lgth];
 		transfer(position, arr);
 		int startIdx = 0;
 		int endIdx = lgth;
 		while(true) {
-			int partitionIdx = partitionSimd(arr, startIdx, endIdx);
+			int partitionIdx = partitionSimd(arr, buf, startIdx, endIdx);
 			if(partitionIdx <= k) {
 				startIdx = partitionIdx;
 			} else {

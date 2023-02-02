@@ -101,18 +101,38 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 	}
 	
 	@Benchmark
+	public void quickTopKLomuto(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKLomuto(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
 	public void quickTopKSimd(BenchmarkVector vector, Blackhole blackhole) {
 		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimd(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKSimdFewAllocs(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimdFewAllocs(VECTOR_SIZE / 5));
 	}
 
 	@Benchmark
 	public void sumInt(BenchmarkVector vector, Blackhole blackhole) {
 		blackhole.consume(vector.vector.sumInt());
 	}
+	
+	@Benchmark
+	public void sumIntSimd(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).sumIntSimd());
+	}
 
 	@Benchmark
 	public void toIntArray(BenchmarkVector vector) {
 		vector.vector.toIntArray();
+	}
+	
+	@Benchmark
+	public void toIntArraySimd(BenchmarkVector vector) {
+		((SegmentIntegerVector) vector.vector).toIntArraySimd();
 	}
 
 	/**

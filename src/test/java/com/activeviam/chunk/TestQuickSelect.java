@@ -60,7 +60,8 @@ public class TestQuickSelect {
 	
 	
 	private void testPartitionSimd(int[] arr, int[] expectedArr, int expectedPartition) {
-		int partitionIdx = SegmentIntegerBlock.partitionSimd(arr, 0, arr.length);
+		var buf = new int[arr.length];
+		int partitionIdx = SegmentIntegerBlock.partitionSimd(arr, buf, 0, arr.length);
 		assertArrayEquals(arr, expectedArr);
 		assertEquals(partitionIdx, expectedPartition);
 	}

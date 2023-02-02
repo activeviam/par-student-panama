@@ -77,6 +77,12 @@ public class SegmentIntegerVector extends ASegmentVector {
 		checkIndex(0, dst.length);
 		this.block.transfer(position, dst);
 	}
+	
+	public final int[] toIntArraySimd() {
+		final int[] res = new int[size()];
+		((SegmentIntegerBlock) block).transferSimd(position, res);
+		return res;
+	}
 
 	@Override
 	public Integer read(final int index) {
@@ -214,6 +220,14 @@ public class SegmentIntegerVector extends ASegmentVector {
 	@Override
 	public int sumInt() {
 		int sum = 0;
+		for(int i = 0; i < length; i++) {
+			sum += readInt(i);
+		}
+		return sum;
+	}
+	
+	public int sumIntSimd() {
+		int sum = 0;
 		for(int i = 0; i < length; i += VECTOR_STEP) {
 			sum += getSimd(i).reduceLanes(VectorOperators.ADD);
 		}
@@ -228,11 +242,27 @@ public class SegmentIntegerVector extends ASegmentVector {
 		return ((SegmentIntegerBlock) block).quickTopK(this.position, length, k);
 	}
 	
+	public int[] quickTopKLomuto(final int k) {
+		checkIndex(0, k);
+		if (k == 0) {
+			return new int[0];
+		}
+		return ((SegmentIntegerBlock) block).quickTopKSimd(this.position, length, k);
+	}
+	
 	public int[] quickTopKSimd(final int k) {
 		checkIndex(0, k);
 		if (k == 0) {
 			return new int[0];
 		}
 		return ((SegmentIntegerBlock) block).quickTopKSimd(this.position, length, k);
+	}
+	
+	public int[] quickTopKSimdFewAllocs(final int k) {
+		checkIndex(0, k);
+		if (k == 0) {
+			return new int[0];
+		}
+		return ((SegmentIntegerBlock) block).quickTopKSimdFewAllocs(this.position, length, k);
 	}
 }

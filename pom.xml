@@ -128,6 +128,24 @@
               <classpathScope>test</classpathScope>
             </configuration>
           </execution>
+          <execution>
+            <id>run-benchmarks-jfr</id>
+            <goals><goal>exec</goal></goals>
+            <configuration>
+              <executable>java</executable>
+              <arguments>
+                <argument>--add-modules</argument>
+                <argument>jdk.incubator.vector</argument>
+                <argument>--enable-preview</argument>
+                <argument>-XX:StartFlightRecording=filename=flight.jfr,settings=profile</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.openjdk.jmh.Main</argument>
+                <argument>${jmhArgs}</argument>
+              </arguments>
+              <classpathScope>test</classpathScope>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>

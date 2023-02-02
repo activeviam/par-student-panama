@@ -247,7 +247,7 @@ public class SegmentIntegerVector extends ASegmentVector {
 		if (k == 0) {
 			return new int[0];
 		}
-		return ((SegmentIntegerBlock) block).quickTopKSimd(this.position, length, k);
+		return ((SegmentIntegerBlock) block).quickTopKLomuto(this.position, length, k);
 	}
 	
 	public int[] quickTopKSimd(final int k) {

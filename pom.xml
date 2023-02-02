@@ -93,6 +93,7 @@
             <configuration>
               <executable>java</executable>
               <arguments>
+                <argument>-XX:CompileThresholdScaling=0.05</argument>
                 <argument>--add-modules</argument>
                 <argument>jdk.incubator.vector</argument>
                 <argument>--enable-preview</argument>

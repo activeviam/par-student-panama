@@ -35,7 +35,7 @@ public class AJmhBenchmarkVector {
 	/**
 	 * Size of the tested vector.
 	 */
-	@Param({"1000", "100000", "10000000", "100000000"})
+	@Param({/*"1000", "100000", "10000000",*/ "100000000"})
 	protected static int VECTOR_SIZE;
 
 	/**

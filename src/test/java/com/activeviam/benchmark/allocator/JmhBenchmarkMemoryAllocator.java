@@ -16,13 +16,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 20, time = 100, timeUnit = MILLISECONDS)
+@Warmup(iterations = 5, time = 100, timeUnit = MILLISECONDS)
 @Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class JmhBenchmarkMemoryAllocator {
     protected IVectorAllocator ALLOCATOR;
     protected Blackhole BLACKHOLE;
-    @Param({"1000", "100000", "10000000", "100000000"})
+    @Param({"1000", "100000", "10000000"})
     protected static int NB_ALLOCATIONS;
 
     @Benchmark

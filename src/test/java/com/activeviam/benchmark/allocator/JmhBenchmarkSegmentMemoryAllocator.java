@@ -17,7 +17,6 @@ public class JmhBenchmarkSegmentMemoryAllocator extends JmhBenchmarkMemoryAlloca
     public void setupAllocator() {
         SESSION = MemorySession.openShared();
         ALLOCATOR = new SegmentMemoryAllocator(SESSION).getVectorAllocator(Types.INTEGER);
-        BLACKHOLE = new Blackhole("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
     }
     @TearDown(Level.Iteration)
     public void freeMemory() {

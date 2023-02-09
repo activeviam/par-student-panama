@@ -22,6 +22,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class JmhBenchmarkMemoryAllocator {
     protected IVectorAllocator ALLOCATOR;
     protected Blackhole BLACKHOLE;
+
+    @Setup
+    public void setupBlackhole() {
+        BLACKHOLE = new Blackhole("Today's password is swordfish. I understand instantiating Blackholes directly is dangerous.");
+    }
     @Param({"1000", "100000", "10000000"})
     protected static int NB_ALLOCATIONS;
 

@@ -26,7 +26,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 20, time = 100, timeUnit = MILLISECONDS)
-@Measurement(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class AJmhBenchmarkVector {
 
@@ -35,7 +35,7 @@ public class AJmhBenchmarkVector {
 	/**
 	 * Size of the tested vector.
 	 */
-	@Param({/*"1000", "100000", "10000000",*/ "100000000"})
+	@Param({/*"1000", "100000",*/ "10000000"/*, "100000000"*/})
 	protected static int VECTOR_SIZE;
 
 	/**
@@ -89,7 +89,7 @@ public class AJmhBenchmarkVector {
 		/**
 		 * Creates the tested vector.
 		 */
-		@Setup(Level.Trial)
+		@Setup(Level.Iteration)
 		public void initializeVector() {
 			this.vector = VECTOR_ALLOCATOR.allocateNewVector(VECTOR_SIZE);
 			for (int i = 0; i < VECTOR_SIZE; i++) {
@@ -100,7 +100,7 @@ public class AJmhBenchmarkVector {
 		/**
 		 * Destroys the tested vector.
 		 */
-		@TearDown(Level.Trial)
+		@TearDown(Level.Iteration)
 		public void teardownVector() {
 			if (this.vector instanceof AFixedBlockVector) {
 				((AFixedBlockVector) this.vector).release();

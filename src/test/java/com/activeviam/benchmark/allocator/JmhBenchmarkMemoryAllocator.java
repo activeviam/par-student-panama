@@ -14,13 +14,13 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 4, time = 100, timeUnit = MILLISECONDS)
-@Measurement(iterations = 50, time = 10, timeUnit = MILLISECONDS)
+@Warmup(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 50, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class JmhBenchmarkMemoryAllocator {
     protected IVectorAllocator ALLOCATOR;
 
-    @Param({"1000", "10000", "100000" })
+    @Param({"1000", "100000", "10000000", "100000000"})
     protected static int NB_ALLOCATIONS;
 
     @Benchmark

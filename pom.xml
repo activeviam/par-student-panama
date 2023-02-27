@@ -14,10 +14,16 @@
     <junit-jupiter.version>5.7.0</junit-jupiter.version>
     <assertj-core.version>3.13.2</assertj-core.version>
     <jmh.version>1.35</jmh.version>
+    <trove.version>3.0.3</trove.version>
   </properties>
 
 
   <dependencies>
+    <dependency>
+      <groupId>net.sf.trove4j</groupId>
+      <artifactId>trove4j</artifactId>
+      <version>${trove.version}</version>
+    </dependency>
     <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>

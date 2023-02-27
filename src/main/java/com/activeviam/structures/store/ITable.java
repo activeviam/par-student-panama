@@ -1,5 +1,7 @@
 package com.activeviam.structures.store;
 
+import java.util.BitSet;
+
 /**
  * A table contains {@link IRecord}.
  *
@@ -44,5 +46,17 @@ public interface ITable {
 	 * @return the number of records in the table
 	 */
 	int size();
+
+	/**
+	 * Finds the rows whose attributes match the given predicate.
+	 *
+	 * <p>The size of the predicate must be equals to the number of attributes.
+	 *
+	 * <p>A negative value means no condition on the attribute.
+	 *
+	 * @param predicate
+	 * @return the rows matching the given predicate
+	 */
+	BitSet findRows(int[] predicate);
 
 }

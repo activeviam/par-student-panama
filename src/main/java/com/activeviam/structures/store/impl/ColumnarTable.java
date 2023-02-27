@@ -6,9 +6,14 @@
  */
 package com.activeviam.structures.store.impl;
 
+import static java.lang.Math.min;
+
+import com.activeviam.chunk.IChunkAllocator;
+import com.activeviam.chunk.OnHeapAllocator;
 import com.activeviam.structures.store.IRecord;
 import com.activeviam.structures.store.IWritableTable;
 import java.util.Arrays;
+import java.util.BitSet;
 
 /**
  * {@link IWritableTable} with a columnar storage.
@@ -26,6 +31,9 @@ public class ColumnarTable implements IWritableTable {
 	 */
 	protected final int valueCount;
 
+	/** IChunk allocator */
+	protected final IChunkAllocator allocator;
+
 	/** Data chunks */
 	protected ChunkSet[] chunks;
 
@@ -42,9 +50,14 @@ public class ColumnarTable implements IWritableTable {
 	protected final ITableWriter writer;
 
 	public ColumnarTable(TableFormat format) {
+		this(format, new OnHeapAllocator());
+	}
+
+	public ColumnarTable(TableFormat format, IChunkAllocator allocator) {
 		this.attributeCount = format.attributeCount;
 		this.valueCount = format.valueCount;
 		this.chunkSize = format.chunkSize;
+		this.allocator = allocator;
 		if (Integer.bitCount(this.chunkSize) != 1) {
 			throw new IllegalArgumentException("ChunkSize is not a power of 2: " + this.chunkSize);
 		}
@@ -123,7 +136,7 @@ public class ColumnarTable implements IWritableTable {
 
 		final ChunkSet[] newChunks = Arrays.copyOf(oldChunks, numChunks);
 		for (int i = numOldChunks; i < numChunks; ++i) {
-			newChunks[i] = new ChunkSet(attributeCount, valueCount, 1 << chunkOrder);
+			newChunks[i] = new ChunkSet(attributeCount, valueCount, 1 << chunkOrder, allocator);
 		}
 		this.chunks = newChunks;
 	}
@@ -217,6 +230,50 @@ public class ColumnarTable implements IWritableTable {
 		size = newSize;
 	}
 
+	@Override
+	public BitSet findRows(int[] predicate) {
+		final BitSet result = new BitSet();
+		int rowsToScan = size;
+		int c = 0;
+		while (rowsToScan > 0) {
+			final BitSet localRows = chunks[c].findRows(predicate, min(rowsToScan, chunkSize));
+			final int offset = c * chunkSize;
+			localRows.stream().forEach(localRow -> result.set(localRow + offset));
+			++c;
+			rowsToScan -= chunkSize;
+		}
+		return result;
+	}
+
+	public long sizeInBytes() {
+		// 16: Object header
+		// 4: valueCount, size, chunkSize, chunkOrder, chunkMask attributes
+		// 8: Reference to the chunks array
+		// 8: Reference to the table writer
+
+		long sizeInBytes = 16 + 6 * 4 + 2 * 8;
+
+		// Content of the chunks array
+		for (ChunkSet chunk: chunks) {
+			if (null != chunk) {
+				sizeInBytes += chunk.sizeInBytes();
+			}
+		}
+
+		return sizeInBytes;
+	}
+
+	/**
+	 * Prints the content of the table.
+	 */
+	public void print() {
+		ITableWriter cursor = new TableWriter();
+		for (int row = 0; row < size; row++) {
+			cursor.setRow(row);
+			System.out.println(cursor);
+		}
+	}
+
 	/**
 	 * Writer to efficiently add a new row in the table.
 	 *
@@ -275,30 +332,4 @@ public class ColumnarTable implements IWritableTable {
 		}
 	}
 
-	/**
-	 * Gets the total size of the table.
-	 * 
-	 * <p>
-	 *   This includes data as well as abject internal attributes, class pointers, ...
-	 * </p>
-	 * 
-	 * @return estimated size (in bytes) of the table
-	 */
-	public long sizeInBytes() {
-		// 16: Object header
-		// 4: valueCount, size, chunkSize, chunkOrder, chunkMask attributes
-		// 8: Reference to the chunks array
-		// 8: Reference to the table writer
-
-		long sizeInBytes = 16 + 6 * 4 + 2 * 8;
-
-		// Content of the chunks array
-		for (ChunkSet chunk: chunks) {
-			if (null != chunk) {
-				sizeInBytes += chunk.sizeInBytes();
-			}
-		}
-
-		return sizeInBytes;
-	}
 }

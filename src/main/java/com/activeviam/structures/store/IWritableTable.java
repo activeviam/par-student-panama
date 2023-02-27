@@ -27,14 +27,26 @@ public interface IWritableTable extends ITable {
 	/**
 	 * Reduces the size of the table. Rows above this size will be removed.
 	 *
-	 * @param newSize
+	 * @param newSize the target size
 	 */
 	void truncate(int newSize);
 
 	interface ITableWriter {
 
+		/**
+		 * Sets the value of an attribute column.
+		 *
+		 * @param column The attribute column
+		 * @param value The value
+		 */
 		void writeInt(int column, int value);
 
+		/**
+		 * Sets the value of a value column.
+		 *
+		 * @param column The value column
+		 * @param value The value
+		 */
 		void writeDouble(int column, double value);
 
 		/**

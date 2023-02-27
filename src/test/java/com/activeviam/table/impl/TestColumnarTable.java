@@ -1,6 +1,8 @@
 package com.activeviam.table.impl;
 
-import com.activeviam.table.impl.ColumnarTable.TableFormat;
+import com.activeviam.structures.store.impl.ColumnarTable;
+import com.activeviam.structures.store.impl.ColumnarTable.TableFormat;
+import com.activeviam.structures.store.impl.Record;
 import java.util.BitSet;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

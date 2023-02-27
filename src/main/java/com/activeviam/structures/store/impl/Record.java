@@ -68,9 +68,7 @@ public class Record implements IRecord {
 		Record other = (Record) obj;
 		if (!Arrays.equals(attributes, other.attributes))
 			return false;
-		if (!Arrays.equals(values, other.values))
-			return false;
-		return true;
+		return Arrays.equals(values, other.values);
 	}
 
 	@Override

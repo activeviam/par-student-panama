@@ -1,9 +1,11 @@
 package com.activeviam.table.impl;
 
 import static java.lang.Math.min;
+
 import com.activeviam.chunk.IChunkAllocator;
 import com.activeviam.chunk.OnHeapAllocator;
-import com.activeviam.table.IRecord;
+import com.activeviam.structures.store.IRecord;
+import com.activeviam.structures.store.impl.Record;
 import com.activeviam.table.IWritableTable;
 import java.util.Arrays;
 import java.util.BitSet;

@@ -1,5 +1,6 @@
 package com.activeviam.table;
 
+import com.activeviam.structures.store.IRecord;
 import java.util.BitSet;
 
 /**

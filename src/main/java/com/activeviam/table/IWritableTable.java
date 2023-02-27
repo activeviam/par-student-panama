@@ -1,5 +1,7 @@
 package com.activeviam.table;
 
+import com.activeviam.structures.store.IRecord;
+
 /**
  * Interface to edit an {@link ITable}.
  *

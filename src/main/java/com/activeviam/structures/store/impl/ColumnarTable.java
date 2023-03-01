@@ -231,7 +231,7 @@ public class ColumnarTable implements IWritableTable {
 	}
 
 	@Override
-	public BitSet findRows(int[] predicate) {
+	public BitSet findRowsAsBitSet(int[] predicate) {
 		final BitSet result = new BitSet();
 		int rowsToScan = size;
 		int c = 0;

@@ -1,7 +1,6 @@
 package com.activeviam.structures.store;
 
-import java.util.BitSet;
-import jdk.jshell.spi.ExecutionControl.NotImplementedException;
+import com.activeviam.structures.bitmap.IBitmap;
 
 /**
  * A table contains {@link IRecord}.
@@ -58,8 +57,6 @@ public interface ITable {
 	 * @param predicate
 	 * @return the rows matching the given predicate
 	 */
-	default BitSet findRowsAsBitSet(int[] predicate) {
-		throw new RuntimeException("TODO");
-	};
+	IBitmap findRows(int[] predicate);
 
 }

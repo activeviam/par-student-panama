@@ -10,6 +10,8 @@ import static java.lang.Math.min;
 
 import com.activeviam.chunk.IChunkAllocator;
 import com.activeviam.chunk.OnHeapAllocator;
+import com.activeviam.structures.bitmap.IBitmap;
+import com.activeviam.structures.bitmap.impl.BitSetBitmap;
 import com.activeviam.structures.store.IRecord;
 import com.activeviam.structures.store.IWritableTable;
 import java.util.Arrays;
@@ -231,8 +233,8 @@ public class ColumnarTable implements IWritableTable {
 	}
 
 	@Override
-	public BitSet findRowsAsBitSet(int[] predicate) {
-		final BitSet result = new BitSet();
+	public IBitmap findRows(int[] predicate) {
+		final IBitmap result = new BitSetBitmap();
 		int rowsToScan = size;
 		int c = 0;
 		while (rowsToScan > 0) {

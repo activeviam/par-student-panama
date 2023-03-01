@@ -59,7 +59,7 @@ public class MultiVersionPrimaryIndex extends
 		/**
 		 * The index of the key field.
 		 */
-		protected final int keyField; // Colonne des primary keys, ici 0
+		protected final int keyField;
 
 		/**
 		 * Mapping between value of the key field and the position of the associated record.

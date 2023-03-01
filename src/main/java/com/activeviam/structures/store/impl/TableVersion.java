@@ -60,7 +60,12 @@ public class TableVersion extends ABasicVersion<VersionedColumnarTable> implemen
 	public int size() {
 		return base.getValidRecordCount(epoch.getId(), visibleSize);
 	}
-	
+
+	@Override
+	public IBitmap findRows(int[] predicate) {
+		return filter(base.findRows(predicate));
+	}
+
 	@Override
 	public int visibleSize() {
 		return visibleSize;

@@ -26,7 +26,7 @@ public abstract class ASecondaryIndexBaseV2<C extends AAppendOnlySecondaryIndex>
       throw new IllegalArgumentException("ChunkSize is not a power of 2: " + this.chunkSize);
     }
     this.chunkOrder = ColumnarTable.getOrder(format.getChunkSize());
-	this.chunkMask = (1 << this.chunkOrder) - 1;
+	  this.chunkMask = (1 << this.chunkOrder) - 1;
     this.indexedFields = format.getIndexedFields();
   }
 

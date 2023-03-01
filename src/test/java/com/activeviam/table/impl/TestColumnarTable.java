@@ -1,5 +1,7 @@
 package com.activeviam.table.impl;
 
+import com.activeviam.structures.bitmap.IBitmap;
+import com.activeviam.structures.bitmap.impl.BitSetBitmap;
 import com.activeviam.structures.store.impl.ColumnarTable;
 import com.activeviam.structures.store.impl.ColumnarTable.TableFormat;
 import com.activeviam.structures.store.impl.Record;
@@ -19,14 +21,14 @@ public class TestColumnarTable {
 
 		table.print();
 
-		BitSet expected = new BitSet();
+		IBitmap expected = new BitSetBitmap();
 		expected.set(1);
-		Assertions.assertEquals(expected, table.findRowsAsBitSet(new int[] {1, 2, 1}));
+		Assertions.assertEquals(expected, table.findRows(new int[] {1, 2, 1}));
 
 		expected.clear();
 		expected.set(2);
 		expected.set(6);
-		Assertions.assertEquals(expected, table.findRowsAsBitSet(new int[] {-1, -1, 2}));
+		Assertions.assertEquals(expected, table.findRows(new int[] {-1, -1, 2}));
 	}
 
 }

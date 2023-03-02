@@ -68,8 +68,9 @@ public class StoreVersion extends ABasicVersion<Void> implements IStoreVersion {
 
 	@Override
 	public IBitmap findRows(final int[] pattern) {
-		final IBitmap rows = secondaryIndex.getRows(pattern);
-		return table.filter(rows);
+//		final IBitmap rows = secondaryIndex.getRows(pattern);
+//		return table.filter(rows);
+		return table.findRows(pattern);
 	}
 
 	@Override

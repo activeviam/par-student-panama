@@ -1,4 +1,4 @@
-package com.activeviam.table.impl;
+package com.activeviam.structures.table.impl;
 
 import com.activeviam.structures.bitmap.IBitmap;
 import com.activeviam.structures.bitmap.impl.BitSetBitmap;

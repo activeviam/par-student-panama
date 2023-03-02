@@ -8,11 +8,9 @@ import com.activeviam.heap.MinHeapIntegerWithIndices;
 import com.activeviam.iterator.IPrimitiveIterator;
 import jdk.incubator.vector.*;
 
-import java.lang.foreign.MemorySession;
-import java.lang.foreign.SegmentAllocator;
-import java.lang.foreign.ValueLayout;
+import java.lang.foreign.*;
 import java.nio.ByteOrder;
-import java.util.ArrayList;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
@@ -338,6 +336,38 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 				endIdx = partitionIdx;
 			} else {
 				return Arrays.copyOfRange(arr, lgth - k, lgth);
+			}
+		}
+	}
+	
+	public int[] quickTopKNative(int position, int lgth, int k) {
+		var linker = Linker.nativeLinker();
+		var lib = SymbolLookup.libraryLookup(Paths.get("./libtopk.so"), MemorySession.global());
+		var partitionNative = linker.downcallHandle(lib.lookup("partition").orElseThrow(),
+			FunctionDescriptor.of(ValueLayout.JAVA_INT,
+				ValueLayout.ADDRESS, ValueLayout.ADDRESS, ValueLayout.JAVA_INT, ValueLayout.JAVA_INT));
+		try(MemorySession session = MemorySession.openConfined()) {
+			var arr = session.allocateArray(ValueLayout.JAVA_INT, lgth);
+			var buf = session.allocateArray(ValueLayout.JAVA_INT, lgth);
+			MemorySegment.copy(this.segment, (long) position * 4, arr, 0, arr.byteSize());
+			int startIdx = 0;
+			int endIdx = lgth;
+			while(true) {
+				int partitionIdx;
+				try {
+					partitionIdx = (Integer) partitionNative.invoke(arr, buf, startIdx, endIdx);
+				} catch (Throwable thr) {
+					throw new RuntimeException("Could not call native libtopk.partition function");
+				}
+				if(partitionIdx == startIdx) // Pivot was smallest element; skip it to avoid infinite recursion
+					partitionIdx++;
+				if(partitionIdx < lgth - k) {
+					startIdx = partitionIdx;
+				} else if(partitionIdx > lgth - k) {
+					endIdx = partitionIdx;
+				} else {
+					return arr.asSlice((lgth - k) * 4L, k * 4L).toArray(ValueLayout.JAVA_INT);
+				}
 			}
 		}
 	}

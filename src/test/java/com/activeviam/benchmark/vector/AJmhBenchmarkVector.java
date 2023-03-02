@@ -11,7 +11,6 @@ import com.activeviam.Types;
 import com.activeviam.vector.AFixedBlockVector;
 import com.activeviam.vector.IVector;
 import com.activeviam.vector.IVectorAllocator;
-import java.math.BigDecimal;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 

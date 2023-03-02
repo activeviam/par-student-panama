@@ -10,14 +10,11 @@ package com.activeviam.benchmark.vector;
 import com.activeviam.Types;
 import com.activeviam.chunk.*;
 import com.activeviam.vector.IVector;
-import com.activeviam.vector.IVectorAllocator;
 import com.activeviam.vector.SegmentIntegerVector;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
-import java.lang.foreign.MemorySegment;
 import java.lang.foreign.MemorySession;
-import java.util.function.IntBinaryOperator;
 
 import static com.activeviam.Types.INTEGER;
 
@@ -56,9 +53,7 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 			ZERO_VECTOR.writeInt(i, 0);
 		}
 	}
-
-	protected static final IntBinaryOperator operator = Integer::sum;
-
+	
 	/**
 	 * Setup method for a vector sized as half of the benched vector.
 	 */
@@ -113,6 +108,11 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 	@Benchmark
 	public void quickTopKSimdFewAllocs(BenchmarkVector vector, Blackhole blackhole) {
 		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimdFewAllocs(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKNative(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKNative(VECTOR_SIZE / 5));
 	}
 
 	@Benchmark

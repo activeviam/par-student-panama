@@ -4,8 +4,6 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.foreign.MemorySession;
 import java.util.Arrays;
-import java.util.Comparator;
-import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -180,5 +178,40 @@ public class TestQuickSelect {
 	@Test
 	public void testQuickQuantileInt3() {
 		testQuickQuantileInt(1000, 0.9, 2000);
+	}
+	
+	
+	private void testQuickTopKNativeRandom(int n, int k, int scale) {
+		int[] src = new int[n];
+		for(int i = 0; i < n; i++) {
+			src[i] = (int) Math.floor(Math.random() * scale);
+		}
+		
+		int[] copy = Arrays.copyOf(src, n);
+		Arrays.sort(copy);
+		int[] expectedTopK = Arrays.copyOfRange(copy, n - k, n);
+		
+		try(var session = MemorySession.openConfined()) {
+			var block = new SegmentIntegerBlock(session, src.length);
+			block.write(0, src);
+			
+			int[] topK = block.quickTopKNative(0, src.length, k);
+			// Sort values before comparing, as any order is considered valid.
+			Arrays.sort(topK);
+			assertArrayEquals(topK, expectedTopK);
+		}
+	}
+	
+	@Test
+	public void testQuickTopKNative1() {
+		testQuickTopKNativeRandom(20, 3, 40);
+	}
+	@Test
+	public void testQuickTopKNative2() {
+		testQuickTopKNativeRandom(20, 3, 5);
+	}
+	@Test
+	public void testQuickTopKNative3() {
+		testQuickTopKNativeRandom(1000, 100, 2000);
 	}
 }

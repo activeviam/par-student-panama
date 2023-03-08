@@ -32,10 +32,23 @@ public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 
 	protected static IVector ZERO_VECTOR;
 	
-	@Setup(Level.Trial)
+	protected MemorySession memorySession;
+	
+	@Setup(Level.Iteration)
 	@Override
 	public void setupVectorAllocator() {
-		VECTOR_ALLOCATOR = new SegmentMemoryAllocator(MemorySession.openConfined()).getVectorAllocator(INTEGER);
+		memorySession = MemorySession.openConfined();
+		VECTOR_ALLOCATOR = new SegmentMemoryAllocator(memorySession).getVectorAllocator(INTEGER);
+	}
+	
+	@TearDown(Level.Iteration)
+	@Override
+	public void teardownVectorAllocator() {
+		if(VECTOR_ALLOCATOR == null) return;
+		VECTOR_ALLOCATOR.release();
+		VECTOR_ALLOCATOR = null;
+		memorySession.close();
+		memorySession = null;
 	}
 	
 	@Override

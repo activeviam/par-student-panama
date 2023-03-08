@@ -153,5 +153,9 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 			vector.vector.writeInt(POS_VALUES[i], writtenValue);
 		}
 	}
-
+	
+	@Benchmark
+	public void topK(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(vector.vector.topK(VECTOR_SIZE / 5));
+	}
 }

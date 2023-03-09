@@ -16,6 +16,9 @@ import com.activeviam.structures.store.IRecord;
 import com.activeviam.structures.store.IWritableTable;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * {@link IWritableTable} with a columnar storage.
@@ -314,6 +317,20 @@ public class ColumnarTable implements IWritableTable {
 			// 8:  Reference to chunkset
 			// 4:  chunkRow attribute
 			return 16 + 8 + 4;
+		}
+
+		@Override
+		public String toString() {
+			return Stream.concat(
+							IntStream.range(0, attributeCount)
+									.map(a -> chunkSet.readInt(this.chunkRow, a))
+									.mapToObj(value -> String.format("%3d", value)),
+//						.mapToObj(Integer::toString),
+							IntStream.range(0, valueCount)
+									.mapToDouble(a -> chunkSet.readDouble(this.chunkRow, a))
+									.mapToObj(value -> String.format("%5.1f", value)))
+//						.mapToObj(Double::toString))
+					.collect(Collectors.joining(" | "));
 		}
 	}
 

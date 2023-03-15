@@ -34,7 +34,7 @@ public class JmhBenchmarkColumnarTables {
 
 	protected IChunkAllocator CHUNK_ALLOCATOR;
 
-	@Param({"16", /* "32", "64", "128"*/})
+	@Param({"8", /* "32", "64", "128"*/})
 	protected int CHUNK_SIZE;
 
 	@Param({"10", /* "100000", "10000000", "100000000" */})
@@ -45,15 +45,12 @@ public class JmhBenchmarkColumnarTables {
 
 	protected static ColumnarTable ZERO_TABLE;
 
-	@Setup(Level.Trial)
-	public void setupChunkAllocator() {
-		memorySession = MemorySession.openConfined();
-		CHUNK_ALLOCATOR = new SegmentMemoryAllocator(memorySession);
-	}
 
 	@Setup(Level.Trial)
 	public void setZeroTable() {
-		ZERO_TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE), CHUNK_ALLOCATOR);
+		MemorySession memorySession1 = MemorySession.openConfined();
+		IChunkAllocator allocator = new SegmentMemoryAllocator(memorySession1);
+		ZERO_TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE), allocator);
 		for (int i = 0; i < TABLE_SIZE; i++) {
 			ZERO_TABLE.append(zeroRecord());
 		}

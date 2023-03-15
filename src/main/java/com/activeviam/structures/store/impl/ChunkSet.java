@@ -3,6 +3,7 @@ package com.activeviam.structures.store.impl;
 import com.activeviam.chunk.DoubleChunk;
 import com.activeviam.chunk.IChunkAllocator;
 import com.activeviam.chunk.IntegerChunk;
+import com.activeviam.chunk.SegmentIntegerBlock;
 import com.activeviam.structures.store.IChunkSet;
 import java.util.BitSet;
 
@@ -75,6 +76,40 @@ public class ChunkSet implements IChunkSet {
 
 			final IntegerChunk chunk = attributes[p];
 			final BitSet partialResult = chunk.findRows(value, limit);
+			if (partialResult != null) {
+				if (result == null) {
+					result = partialResult;
+				} else {
+					result.and(partialResult);
+				}
+				if (result.isEmpty()) {
+					return result;
+				}
+
+			} else {
+				return new BitSet();
+			}
+		}
+
+		if (null == result) {
+			result = new BitSet(limit);
+			result.flip(0, limit);
+		}
+		return result;
+	}
+
+	public BitSet findRowsSIMD(int[] predicate, int limit) {
+		BitSet result = null;
+
+		for (int p = 0; p < predicate.length; p++) {
+			final int value = predicate[p];
+			if (value < 0) {
+				// no condition
+				continue;
+			}
+
+			final SegmentIntegerBlock chunk = (SegmentIntegerBlock) attributes[p];
+			final BitSet partialResult = chunk.findRowsSIMD(value, limit);
 			if (partialResult != null) {
 				if (result == null) {
 					result = partialResult;

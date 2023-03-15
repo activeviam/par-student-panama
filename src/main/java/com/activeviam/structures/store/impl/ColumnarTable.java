@@ -246,6 +246,20 @@ public class ColumnarTable implements IWritableTable {
 		}
 		return result;
 	}
+	public IBitmap findRowsSIMD(int[] predicate) {
+		final IBitmap result = new BitSetBitmap();
+		int rowsToScan = size;
+		int c = 0;
+
+		while (rowsToScan > 0) {
+			final BitSet localRows = chunks[c].findRowsSIMD(predicate, min(rowsToScan, chunkSize));
+			final int offset = c * chunkSize;
+			localRows.stream().forEach(localRow -> result.set(localRow + offset));
+			++c;
+			rowsToScan -= chunkSize;
+		}
+		return result;
+	}
 
 	public long sizeInBytes() {
 		// 16: Object header
@@ -269,10 +283,8 @@ public class ColumnarTable implements IWritableTable {
 	 * Prints the content of the table.
 	 */
 	public void print() {
-		ITableWriter cursor = new TableWriter();
 		for (int row = 0; row < size; row++) {
-			cursor.setRow(row);
-			System.out.println(cursor);
+			System.out.println(getRecord(row));
 		}
 	}
 

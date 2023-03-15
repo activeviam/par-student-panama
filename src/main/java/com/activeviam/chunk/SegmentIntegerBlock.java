@@ -12,17 +12,18 @@ import java.lang.foreign.*;
 import java.nio.ByteOrder;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.BitSet;
 
 public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	public SegmentIntegerBlock(SegmentAllocator allocator, int capacity) {
 		super(allocator, Types.INTEGER, capacity);
 	}
-	
+
 	@Override
 	public Object read(int position) {
 		return readInt(position);
 	}
-	
+
 	@Override
 	public int readInt(int position) {
 		return segment.get(ValueLayout.JAVA_INT, (long) position * 4);
@@ -35,7 +36,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			writeInt(position, (Integer) value);
 		}
 	}
-	
+
 	@Override
 	public void writeInt(int position, int value) {
 		segment.set(ValueLayout.JAVA_INT, (long) position * 4, value);
@@ -45,14 +46,14 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	public void addInt(int position, int value) {
 		writeInt(position, readInt(position) + value);
 	}
-	
+
 	@Override
 	public void transfer(int position, int[] dest) {
 		for(int i = 0; i < dest.length; i++) {
 			dest[i] = readInt(position + i);
 		}
 	}
-	
+
 	public void transferSimd(int position, int[] dest) {
 		int endIdx = position + dest.length;
 		for(int i = 0; i < dest.length; i += VECTOR_LANES) {
@@ -65,42 +66,42 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 				.intoArray(dest, i, mask);
 		}
 	}
-	
+
 	@Override
 	public void write(int position, int[] src) {
 		for(int i = 0; i < src.length; i++) {
 			writeInt(position + i, src[i]);
 		}
 	}
-	
+
 	@Override
 	public void fillInt(int position, int lgth, int v) {
 		for(int i = position; i < position + lgth; i++) {
 			writeInt(i, v);
 		}
 	}
-	
+
 	@Override
 	public void scale(int position, int lgth, int v) {
 		for(int i = position; i < position + lgth; i++) {
 			writeInt(i, readInt(i) * v);
 		}
 	}
-	
+
 	@Override
 	public void divide(int position, int lgth, int v) {
 		for(int i = position; i < position + lgth; i++) {
 			writeInt(i, readInt(i) / v);
 		}
 	}
-	
+
 	@Override
 	public void translate(int position, int lgth, int v) {
 		for(int i = position; i < position + lgth; i++) {
 			writeInt(i, readInt(i) + v);
 		}
 	}
-	
+
 	@Override
 	public int hashCode(int position, int length) {
 		int result = 1;
@@ -109,7 +110,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		return result;
 	}
-	
+
 	@Override
 	public IPrimitiveIterator topK(int position, int lgth, int k) {
 		var heap = new MinHeapInteger(k);
@@ -124,7 +125,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		return heap;
 	}
-	
+
 	/**
 	 * Partitions a given subarray of {@code arr} into two subarrays.
 	 * A pivot value {@code p} is chosen and elements are reordered,
@@ -149,7 +150,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			arr[right] = tmp;
 		}
 	}
-	
+
 	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
 	public static final int VECTOR_LANES = VECTOR_SPECIES.length();
 	private static final int intMask = (1 << VECTOR_LANES) - 1;
@@ -166,7 +167,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			PERM_TABLE[mask] = IntVector.fromArray(VECTOR_SPECIES, indices, 0);
 		}
 	}
-	
+
 	/**
 	 * Same as {@code partition}, but uses Lomuto partition scheme for comparison.
 	 */
@@ -174,14 +175,14 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		int pivotIdx = (startIdx+endIdx-1)/2;
 		int pivot = arr[pivotIdx];
 		arr[pivotIdx] = arr[endIdx-1];
-		
+
 		int lesserCnt = 0;
 		int greaterCnt = 0;
 		int[] greater = new int[endIdx - startIdx];
-		
+
 		for(int i = startIdx; i < endIdx - 1; i++) {
 			int x = arr[i];
-			
+
 			if(x >= pivot) {
 				greater[greaterCnt] = x;
 				greaterCnt++;
@@ -190,18 +191,18 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 				lesserCnt++;
 			}
 		}
-		
+
 		arr[startIdx + lesserCnt] = pivot;
-		
+
 		for(int i = 0; i < greaterCnt; i++) {
 			arr[startIdx + lesserCnt + 1 + i] = greater[i];
 		}
-		
+
 		if(lesserCnt == 0) // Pivot was smallest element; skip it to avoid infinite recursion
 			return startIdx + 1;
 		return startIdx + lesserCnt;
 	}
-	
+
 	/**
 	 * Same as {@code partitionLomuto}, but uses SIMD instructions to speed up the partitioning.
 	 * {@code buf} should be temporary storage with at least the size of {@code arr}
@@ -211,21 +212,21 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		int pivot = arr[pivotIdx];
 		arr[pivotIdx] = arr[endIdx-1];
 		IntVector pivotV = IntVector.broadcast(VECTOR_SPECIES, pivot);
-		
+
 		int lesserCnt = 0;
 		int greaterCnt = 0;
-		
+
 		for(int i = startIdx; i < endIdx - 1; i += VECTOR_LANES) {
 			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
 			if(i + VECTOR_LANES > endIdx - 1) {
 				mask = VECTOR_SPECIES.indexInRange(i, endIdx - 1);
 			}
 			IntVector v = IntVector.fromArray(VECTOR_SPECIES, arr, i, mask);
-			
+
 			int cmpGreater = (int) v.compare(VectorOperators.GE, pivotV, mask).toLong();
 			v.rearrange(PERM_TABLE[cmpGreater].toShuffle()).intoArray(buf, greaterCnt, mask);
 			greaterCnt += Integer.bitCount(cmpGreater);
-			
+
 			int cmpLesser = ~cmpGreater & intMask;
 			if(i + VECTOR_LANES > startIdx) {
 				cmpLesser = (int) v.compare(VectorOperators.LT, pivotV, mask).toLong();
@@ -233,9 +234,9 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			v.rearrange(PERM_TABLE[cmpLesser].toShuffle()).intoArray(arr, startIdx + lesserCnt, mask);
 			lesserCnt += Integer.bitCount(cmpLesser);
 		}
-		
+
 		arr[startIdx + lesserCnt] = pivot;
-		
+
 		for(int i = 0; i < greaterCnt; i += VECTOR_LANES) {
 			VectorMask<Integer> mask = VECTOR_SPECIES.maskAll(true);
 			if(i + VECTOR_LANES > greaterCnt) {
@@ -244,12 +245,12 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			IntVector.fromArray(VECTOR_SPECIES, buf, i, mask)
 				.intoArray(arr, startIdx + lesserCnt + 1 + i, mask);
 		}
-		
+
 		if(lesserCnt == 0) // Pivot was smallest element; skip it to avoid infinite recursion
 			return startIdx + 1;
 		return startIdx + lesserCnt;
 	}
-	
+
 	/**
 	 * Returns an array composed of the k biggest elements in the
 	 * block between {@code position} and {@code position + lgth}.
@@ -276,7 +277,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	/**
 	 * Identical to {@code quickTopK}, but uses Lomuto partition scheme
 	 * for comparison with quickTopKSimd
@@ -297,7 +298,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	/**
 	 * Identical to {@code quickTopKLomuto}, but uses SIMD instructions.
 	 */
@@ -318,7 +319,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	/**
 	 * Identical to {@code quickTopKSimd}, but does fewer allocations.
 	 */
@@ -339,7 +340,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	public int[] quickTopKNative(int position, int lgth, int k) {
 		var linker = Linker.nativeLinker();
 		var lib = SymbolLookup.libraryLookup(Paths.get("./libtopk.so"), MemorySession.global());
@@ -371,7 +372,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	protected MinHeapIntegerWithIndices topKIndicesHeap(int position, int lgth, int k) {
 		var heap = new MinHeapIntegerWithIndices(k);
 		for(int i = 0; i < lgth; i++) {
@@ -385,14 +386,14 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		return heap;
 	}
-	
+
 	@Override
 	public int[] topKIndices(int position, int lgth, int k) {
 		var heap = topKIndicesHeap(position, lgth, k);
 		heap.sort();
 		return heap.getArrayIndices();
 	}
-	
+
 	@Override
 	public IPrimitiveIterator bottomK(int position, int lgth, int k) {
 		var heap = new MaxHeapInteger(k);
@@ -407,7 +408,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		return heap;
 	}
-	
+
 	public MaxHeapIntegerWithIndices bottomKIndicesHeap(int position, int lgth, int k) {
 		var heap = new MaxHeapIntegerWithIndices(k);
 		for(int i = 0; i < lgth; i++) {
@@ -421,18 +422,18 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 		return heap;
 	}
-	
+
 	@Override
 	public int[] bottomKIndices(int position, int lgth, int k) {
 		var heap = bottomKIndicesHeap(position, lgth, k);
 		heap.sort();
 		return heap.getArrayIndices();
 	}
-	
+
 	protected int nearestRank(final int lgth, final double r) {
 		return (int) Math.ceil(lgth * r);
 	}
-	
+
 	@Override
 	public int quantileInt(int position, int lgth, double r) {
 		if (r <= 0d || r > 1d) {
@@ -444,7 +445,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			return bottomK(position, lgth, nearestRank(lgth, r)).nextInt();
 		}
 	}
-	
+
 	public int quickQuantileInt(int position, int lgth, double r) {
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
@@ -466,7 +467,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	public int quickQuantileIntSimd(int position, int lgth, double r) {
 		if (r <= 0d || r > 1d) {
 			throw new UnsupportedOperationException("Order of the quantile should be greater than zero and less than 1.");
@@ -489,7 +490,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			}
 		}
 	}
-	
+
 	@Override
 	public int quantileIndex(int position, int lgth, double r) {
 		if (r <= 0d || r > 1d) {
@@ -501,7 +502,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			return bottomKIndicesHeap(position, lgth, nearestRank(lgth, r)).peekIndex();
 		}
 	}
-	
+
 	public IntVector getSimd(int position, int maxPosition) {
 		if(position + VECTOR_SPECIES.length() <= maxPosition) {
 			return IntVector.fromMemorySegment(VECTOR_SPECIES, segment,
@@ -512,7 +513,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 					(long) position * 4, ByteOrder.nativeOrder(), mask);
 		}
 	}
-	
+
 	public void putSimd(int position, int maxPosition, IntVector vec) {
 		if(position + VECTOR_SPECIES.length() <= maxPosition) {
 			vec.intoMemorySegment(segment, (long) position * 4, ByteOrder.nativeOrder());
@@ -520,5 +521,24 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 			var mask = VECTOR_SPECIES.indexInRange(position, maxPosition);
 			vec.intoMemorySegment(segment, (long) position * 4, ByteOrder.nativeOrder(), mask);
 		}
+	}
+
+	public BitSet findRowsSIMD(int value, int limit) {
+		BitSet result = null;
+		for(int i = 0; i < limit; i+=VECTOR_LANES) {
+			IntVector vec = getSimd(i, limit);
+			VectorMask<Integer> mask = vec.eq(value);
+			if (mask.anyTrue()) {
+				if (result == null) {
+					result = new BitSet();
+				}
+				for (int j = 0; j < VECTOR_LANES; j++) {
+					if (mask.laneIsSet(j)) {
+						result.set(i + j);
+					}
+				}
+			}
+		}
+		return result;
 	}
 }

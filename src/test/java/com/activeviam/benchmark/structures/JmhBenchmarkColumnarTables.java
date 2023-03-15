@@ -45,8 +45,8 @@ public class JmhBenchmarkColumnarTables {
 
 	protected static ColumnarTable ZERO_TABLE;
 
-	@Setup(Level.Iteration)
-	public void setupVectorAllocator() {
+	@Setup(Level.Trial)
+	public void setupChunkAllocator() {
 		memorySession = MemorySession.openConfined();
 		CHUNK_ALLOCATOR = new SegmentMemoryAllocator(memorySession);
 	}

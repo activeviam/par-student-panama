@@ -155,6 +155,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	private static final int intMask = (1 << VECTOR_LANES) - 1;
 	private static final IntVector[] PERM_TABLE = new IntVector[1 << VECTOR_LANES];
 	static {
+		System.out.println("SegmentIntegerBlock: VECTOR_LANES = " + VECTOR_LANES);
 		for(int mask = 0; mask <= intMask; mask++) {
 			var indices = new int[VECTOR_LANES];
 			int j = 0;

@@ -53,7 +53,7 @@ public class JmhBenchmarkColumnarTables {
 
 	@Setup(Level.Trial)
 	public void setZeroTable() {
-		ZERO_TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE));
+		ZERO_TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE), CHUNK_ALLOCATOR);
 		for (int i = 0; i < TABLE_SIZE; i++) {
 			ZERO_TABLE.append(zeroRecord());
 		}

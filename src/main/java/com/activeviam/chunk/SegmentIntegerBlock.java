@@ -150,7 +150,7 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 	}
 	
-	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_256;
+	public static final VectorSpecies<Integer> VECTOR_SPECIES = IntVector.SPECIES_PREFERRED;
 	public static final int VECTOR_LANES = VECTOR_SPECIES.length();
 	private static final int intMask = (1 << VECTOR_LANES) - 1;
 	private static final IntVector[] PERM_TABLE = new IntVector[1 << VECTOR_LANES];

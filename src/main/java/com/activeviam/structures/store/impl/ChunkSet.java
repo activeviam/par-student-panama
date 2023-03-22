@@ -5,6 +5,9 @@ import com.activeviam.chunk.IChunkAllocator;
 import com.activeviam.chunk.IntegerChunk;
 import com.activeviam.chunk.SegmentIntegerBlock;
 import com.activeviam.structures.store.IChunkSet;
+import jdk.incubator.vector.VectorMask;
+
+import java.util.Arrays;
 import java.util.BitSet;
 
 /**
@@ -98,9 +101,8 @@ public class ChunkSet implements IChunkSet {
 		return result;
 	}
 
-	public BitSet findRowsSIMD(int[] predicate, int limit) {
-		BitSet result = null;
-
+	public VectorMask<Integer> findRowsSIMD(int[] predicate, int limit) {
+		VectorMask<Integer> m = null;
 		for (int p = 0; p < predicate.length; p++) {
 			final int value = predicate[p];
 			if (value < 0) {
@@ -109,27 +111,22 @@ public class ChunkSet implements IChunkSet {
 			}
 
 			final SegmentIntegerBlock chunk = (SegmentIntegerBlock) attributes[p];
-			final BitSet partialResult = chunk.findRowsSIMD(value, limit);
+			final VectorMask<Integer> partialResult = chunk.findRowsSIMD(value, limit);
 			if (partialResult != null) {
-				if (result == null) {
-					result = partialResult;
+				if (m == null) {
+					m = partialResult;
 				} else {
-					result.and(partialResult);
+					m = m.and(partialResult);
 				}
-				if (result.isEmpty()) {
-					return result;
+				if (!m.anyTrue()) {
+					return m;
 				}
 
 			} else {
-				return new BitSet();
+				return null;
 			}
 		}
-
-		if (null == result) {
-			result = new BitSet(limit);
-			result.flip(0, limit);
-		}
-		return result;
+		return m;
 	}
 
 	@Override

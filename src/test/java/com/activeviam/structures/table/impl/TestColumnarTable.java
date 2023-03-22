@@ -50,14 +50,15 @@ public class TestColumnarTable {
 
 		table.print();
 
-		IBitmap expected = new BitSetBitmap();
-		expected.set(1);
-		Assertions.assertEquals(expected, table.findRowsSIMD(new int[] {1, 2, 1}));
+		boolean[] expected = new boolean[9];
+		expected[1] = true;
+		Assertions.assertArrayEquals(expected, table.findRowsSIMD(new int[] {1, 2, 1}));
 
-		expected.clear();
-		expected.set(2);
-		expected.set(6);
-		Assertions.assertEquals(expected, table.findRowsSIMD(new int[] {-1, -1, 2}));
+		expected = new boolean[9];
+		expected[2] = true;
+		expected[6] = true;
+
+		Assertions.assertArrayEquals(expected, table.findRowsSIMD(new int[] {-1, -1, 2}));
 	}
 
 }

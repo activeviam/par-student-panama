@@ -14,6 +14,8 @@ import com.activeviam.structures.bitmap.IBitmap;
 import com.activeviam.structures.bitmap.impl.BitSetBitmap;
 import com.activeviam.structures.store.IRecord;
 import com.activeviam.structures.store.IWritableTable;
+import jdk.incubator.vector.VectorMask;
+
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -246,15 +248,22 @@ public class ColumnarTable implements IWritableTable {
 		}
 		return result;
 	}
-	public IBitmap findRowsSIMD(int[] predicate) {
-		final IBitmap result = new BitSetBitmap();
+	public boolean[] findRowsSIMD(int[] predicate) {
 		int rowsToScan = size;
+		final boolean[] result = new boolean[size];
 		int c = 0;
 
 		while (rowsToScan > 0) {
-			final BitSet localRows = chunks[c].findRowsSIMD(predicate, min(rowsToScan, chunkSize));
+			final VectorMask<Integer> localRows = chunks[c].findRowsSIMD(predicate, min(rowsToScan, chunkSize));
 			final int offset = c * chunkSize;
-			localRows.stream().forEach(localRow -> result.set(localRow + offset));
+			if (localRows.length() > rowsToScan) {
+				for (int id = 0; id < rowsToScan; id++) {
+					result[offset + id] = localRows.laneIsSet(id);
+				}
+			}
+			else {
+				localRows.intoArray(result, offset);
+			}
 			++c;
 			rowsToScan -= chunkSize;
 		}

@@ -28,7 +28,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class JmhBenchmarkColumnarTables {
-	@Param({"1000", /* "100000", "10000000", "100000000" */})
+	@Param({"1000", "100000"})
 	protected static int TABLE_SIZE;
 	protected MemorySession memorySession;
 
@@ -37,7 +37,7 @@ public class JmhBenchmarkColumnarTables {
 	@Param({"8", /* "32", "64", "128"*/})
 	protected int CHUNK_SIZE;
 
-	@Param({"10", /* "100000", "10000000", "100000000" */})
+	@Param({"10", "100", "1000"})
 	protected int NB_OF_ATTRIBUTES;
 
 	@Param({"10", /* "100000", "10000000", "100000000" */})
@@ -45,7 +45,7 @@ public class JmhBenchmarkColumnarTables {
 
 	protected static ColumnarTable ZERO_TABLE;
 
-
+	protected int[] PREDICATE;
 	@Setup(Level.Trial)
 	public void setZeroTable() {
 		MemorySession memorySession1 = MemorySession.openConfined();
@@ -54,6 +54,8 @@ public class JmhBenchmarkColumnarTables {
 		for (int i = 0; i < TABLE_SIZE; i++) {
 			ZERO_TABLE.append(zeroRecord());
 		}
+		PREDICATE = new int[NB_OF_ATTRIBUTES];
+		Arrays.fill(PREDICATE, 0);
 	}
 
 	@Benchmark

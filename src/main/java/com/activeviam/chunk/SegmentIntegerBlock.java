@@ -14,6 +14,8 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.BitSet;
 
+import static java.lang.Math.max;
+
 public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 	public SegmentIntegerBlock(SegmentAllocator allocator, int capacity) {
 		super(allocator, Types.INTEGER, capacity);
@@ -523,22 +525,15 @@ public class SegmentIntegerBlock extends ASegmentBlock implements IntegerChunk{
 		}
 	}
 
-	public BitSet findRowsSIMD(int value, int limit) {
-		BitSet result = null;
+	public VectorMask<Integer> findRowsSIMD(int value, int limit) {
+		boolean[] result = new boolean[max(VECTOR_LANES, limit)];
 		for(int i = 0; i < limit; i+=VECTOR_LANES) {
 			IntVector vec = getSimd(i, limit);
 			VectorMask<Integer> mask = vec.eq(value);
 			if (mask.anyTrue()) {
-				if (result == null) {
-					result = new BitSet();
-				}
-				for (int j = 0; j < VECTOR_LANES; j++) {
-					if (mask.laneIsSet(j)) {
-						result.set(i + j);
-					}
-				}
+				mask.intoArray(result, i);
 			}
 		}
-		return result;
+		return VectorMask.fromArray(VECTOR_SPECIES, result, 0);
 	}
 }

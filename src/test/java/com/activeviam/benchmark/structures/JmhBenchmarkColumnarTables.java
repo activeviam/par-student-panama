@@ -64,7 +64,8 @@ public class JmhBenchmarkColumnarTables {
 		if (TABLE_CONTENT.equals("random")) {
 			Random rand = new Random();
 			for (int i = 0; i < NB_OF_ATTRIBUTES; i++) {
-				PREDICATE[i] = rand.nextInt(10) * rand.nextInt(2);
+				int r = rand.nextInt(2);
+				PREDICATE[i] = rand.nextInt(10)*(1-r) - r;
 			}
 		} else if (TABLE_CONTENT.equals("zero")) {
 			Arrays.fill(PREDICATE, 0);

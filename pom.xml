@@ -146,6 +146,7 @@
                 <argument>jdk.incubator.vector</argument>
                 <argument>--enable-preview</argument>
                 <argument>-XX:StartFlightRecording=filename=jfr_logs,settings=profile</argument>
+                <argument>-XX:NativeMemoryTracking=summary</argument>
                 <argument>-classpath</argument>
                 <classpath/>
                 <argument>org.openjdk.jmh.Main</argument>

@@ -37,14 +37,13 @@ public class JmhBenchmarkColumnarTables {
 	@Param({"1000", "100000"})
 	protected static int TABLE_SIZE;
 
-	@Param({"8", /* "32", "64", "128"*/})
+	@Param({"8", "16", /* "32", "64", "128"*/})
 	protected int CHUNK_SIZE;
 
 	@Param({"10", "100", "1000"})
 	protected int NB_OF_ATTRIBUTES;
 
-	@Param({"10", /* "100000", "10000000", "100000000" */})
-	protected int NB_OF_VALUES;
+	protected int NB_OF_VALUES = 10;
 
 	protected static ColumnarTable TABLE;
 
@@ -54,7 +53,7 @@ public class JmhBenchmarkColumnarTables {
 		MemorySession memorySession = MemorySession.openConfined();
 		CHUNK_ALLOCATOR = new SegmentMemoryAllocator(memorySession);
 	}
-	@Setup(Level.Trial)
+	@Setup(Level.Iteration)
 	public void setTable() {
 		TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE), CHUNK_ALLOCATOR);
 		for (int i = 0; i < TABLE_SIZE; i++) {

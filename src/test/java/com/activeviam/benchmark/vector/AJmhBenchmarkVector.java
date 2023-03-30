@@ -11,18 +11,12 @@ import com.activeviam.Types;
 import com.activeviam.vector.AFixedBlockVector;
 import com.activeviam.vector.IVector;
 import com.activeviam.vector.IVectorAllocator;
-import java.math.BigDecimal;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-import org.openjdk.jmh.annotations.BenchmarkMode;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Mode;
-import org.openjdk.jmh.annotations.OutputTimeUnit;
-import org.openjdk.jmh.annotations.Param;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
+
+import org.openjdk.jmh.annotations.*;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Abstract for measuring the performances of the IVector interface's implementations.
@@ -30,14 +24,17 @@ import org.openjdk.jmh.annotations.TearDown;
 @BenchmarkMode(Mode.AverageTime)
 @State(Scope.Thread)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-public abstract class AJmhBenchmarkVector {
+@Warmup(iterations = 20, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
+@Fork(1)
+public class AJmhBenchmarkVector {
 
 	protected static final int cstValue = 1;
 
 	/**
 	 * Size of the tested vector.
 	 */
-	@Param({"1000", "100000"/* , "10000000" *//* ,"100000000" */})
+	@Param({"1000", "100000", "10000000", "100000000"})
 	protected static int VECTOR_SIZE;
 
 	/**
@@ -48,12 +45,12 @@ public abstract class AJmhBenchmarkVector {
 	 * <li>constant contains a single value everywhere.
 	 * </ul>
 	 */
-	@Param({"random", "constant", "sparse"})
+	@Param({"random", /* "constant", "sparse" */})
 	protected static String VECTOR_CONTENT;
 
 	protected static int HALF_VECTOR_SIZE;
 
-	protected static final int BATCH_SIZE = 10_000;
+	protected static final int BATCH_SIZE = 1000;
 
 	protected static final int POS_CST = 3;
 
@@ -91,7 +88,7 @@ public abstract class AJmhBenchmarkVector {
 		/**
 		 * Creates the tested vector.
 		 */
-		@Setup(Level.Trial)
+		@Setup(Level.Iteration)
 		public void initializeVector() {
 			this.vector = VECTOR_ALLOCATOR.allocateNewVector(VECTOR_SIZE);
 			for (int i = 0; i < VECTOR_SIZE; i++) {
@@ -102,7 +99,7 @@ public abstract class AJmhBenchmarkVector {
 		/**
 		 * Destroys the tested vector.
 		 */
-		@TearDown(Level.Trial)
+		@TearDown(Level.Iteration)
 		public void teardownVector() {
 			if (this.vector instanceof AFixedBlockVector) {
 				((AFixedBlockVector) this.vector).release();
@@ -112,25 +109,25 @@ public abstract class AJmhBenchmarkVector {
 	}
 
 	public static Object computeValue(Types contentType, String contentRepartition, double defaultValue) {
-		BigDecimal value;
+		double value;
 		switch (contentRepartition) {
-			case "random" -> value = BigDecimal.valueOf(Integer.MAX_VALUE * Math.random());
+			case "random" -> value = Integer.MAX_VALUE * Math.random();
 			case "sparse" -> {
 				if (Math.random() > 0.9) {
-					value = BigDecimal.valueOf(Integer.MAX_VALUE * Math.random());
+					value = Integer.MAX_VALUE * Math.random();
 				} else {
-					value = BigDecimal.valueOf(defaultValue);
+					value = defaultValue;
 				}
 			}
-			case "constant" -> value = BigDecimal.valueOf(defaultValue);
+			case "constant" -> value = defaultValue;
 			default -> throw new IllegalStateException("Unexpected contentRepartition parameter value.");
 		}
 		switch (contentType) {
 			case DOUBLE -> {
-				return value.doubleValue();
+				return value;
 			}
 			case INTEGER -> {
-				return value.intValue();
+				return (int) value;
 			}
 			default -> throw new IllegalStateException(
 					"Data creation not implemented for datatype : " + contentType + " , " + "which is : "

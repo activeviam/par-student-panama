@@ -7,25 +7,22 @@
 
 package com.activeviam.benchmark.vector;
 
-import static com.activeviam.Types.INTEGER;
-
 import com.activeviam.Types;
-import com.activeviam.chunk.DirectMemoryAllocator;
-import com.activeviam.chunk.IChunkAllocator;
+import com.activeviam.chunk.*;
 import com.activeviam.vector.IVector;
-import java.util.function.IntBinaryOperator;
-import org.openjdk.jmh.annotations.Benchmark;
-import org.openjdk.jmh.annotations.Level;
-import org.openjdk.jmh.annotations.Scope;
-import org.openjdk.jmh.annotations.Setup;
-import org.openjdk.jmh.annotations.State;
+import com.activeviam.vector.SegmentIntegerVector;
+import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+
+import java.lang.foreign.MemorySession;
+
+import static com.activeviam.Types.INTEGER;
 
 /**
  * JMH Micro Benchmark for vector DOUBLE operation performances.
  */
 @State(Scope.Benchmark)
-public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
+public class JmhBenchmarkSegmentIntegerVector extends AJmhBenchmarkTypedVector {
 
 	protected static int[] HALF_ARRAY;
 
@@ -34,6 +31,30 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 	protected static final int writtenValue = 1;
 
 	protected static IVector ZERO_VECTOR;
+	
+	protected MemorySession memorySession;
+	
+	@Setup(Level.Iteration)
+	@Override
+	public void setupVectorAllocator() {
+		memorySession = MemorySession.openConfined();
+		VECTOR_ALLOCATOR = new SegmentMemoryAllocator(memorySession).getVectorAllocator(INTEGER);
+	}
+	
+	@TearDown(Level.Iteration)
+	@Override
+	public void teardownVectorAllocator() {
+		if(VECTOR_ALLOCATOR == null) return;
+		VECTOR_ALLOCATOR.release();
+		VECTOR_ALLOCATOR = null;
+		memorySession.close();
+		memorySession = null;
+	}
+	
+	@Override
+	protected IChunkAllocator createChunkAllocator() {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * Setup method for a vector containing only zero values that will be used for the stability of operations.
@@ -45,9 +66,7 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 			ZERO_VECTOR.writeInt(i, 0);
 		}
 	}
-
-	protected static final IntBinaryOperator operator = Integer::sum;
-
+	
 	/**
 	 * Setup method for a vector sized as half of the benched vector.
 	 */
@@ -64,11 +83,6 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 		return INTEGER;
 	}
 
-	@Override
-	protected IChunkAllocator createChunkAllocator() {
-		return new DirectMemoryAllocator();
-	}
-
 	@Benchmark
 	public void copyFromHalf(BenchmarkVector vector) {
 		vector.vector.copyFrom(HALF_ARRAY);
@@ -83,15 +97,55 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 	public void quantileInt(BenchmarkVector vector) {
 		vector.vector.quantileInt(quantile);
 	}
+	
+	@Benchmark
+	public void topK(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(vector.vector.topK(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopK(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopK(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKLomuto(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKLomuto(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKSimd(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimd(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKSimdFewAllocs(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKSimdFewAllocs(VECTOR_SIZE / 5));
+	}
+	
+	@Benchmark
+	public void quickTopKNative(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).quickTopKNative(VECTOR_SIZE / 5));
+	}
 
 	@Benchmark
-	public void sumInt(BenchmarkVector vector) {
-		vector.vector.sumInt();
+	public void sumInt(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(vector.vector.sumInt());
+	}
+	
+	@Benchmark
+	public void sumIntSimd(BenchmarkVector vector, Blackhole blackhole) {
+		blackhole.consume(((SegmentIntegerVector) vector.vector).sumIntSimd());
 	}
 
 	@Benchmark
 	public void toIntArray(BenchmarkVector vector) {
 		vector.vector.toIntArray();
+	}
+	
+	@Benchmark
+	public void toIntArraySimd(BenchmarkVector vector) {
+		((SegmentIntegerVector) vector.vector).toIntArraySimd();
 	}
 
 	/**
@@ -153,9 +207,5 @@ public class JmhBenchmarkDirectIntegerVector extends AJmhBenchmarkTypedVector {
 			vector.vector.writeInt(POS_VALUES[i], writtenValue);
 		}
 	}
-	
-	@Benchmark
-	public void topK(BenchmarkVector vector, Blackhole blackhole) {
-		blackhole.consume(vector.vector.topK(VECTOR_SIZE / 5));
-	}
+
 }

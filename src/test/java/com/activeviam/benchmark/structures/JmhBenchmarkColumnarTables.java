@@ -29,6 +29,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Measurement(iterations = 20, time = 100, timeUnit = MILLISECONDS)
 @Fork(1)
 public class JmhBenchmarkColumnarTables {
+	protected MemorySession MEMORY_SESSION;
 	protected IChunkAllocator CHUNK_ALLOCATOR;
 
 	@Param({"random", /* "zero" */})
@@ -37,7 +38,7 @@ public class JmhBenchmarkColumnarTables {
 	@Param({"1000", "100000"})
 	protected static int TABLE_SIZE;
 
-	@Param({"8", "16", /* "32", "64", "128"*/})
+	@Param({"8", "16", "32", "64", "128"})
 	protected int CHUNK_SIZE;
 
 	@Param({"10", "100", "1000"})
@@ -48,11 +49,17 @@ public class JmhBenchmarkColumnarTables {
 	protected static ColumnarTable TABLE;
 
 	protected int[] PREDICATE;
-	@Setup(Level.Trial)
-	public void setChunkAllocator() {
-		MemorySession memorySession = MemorySession.openConfined();
-		CHUNK_ALLOCATOR = new SegmentMemoryAllocator(memorySession);
+	@Setup(Level.Iteration)
+	public void openSession() {
+		MEMORY_SESSION = MemorySession.openConfined();
+		CHUNK_ALLOCATOR = new SegmentMemoryAllocator(MEMORY_SESSION);
 	}
+
+	@TearDown
+	public void closeSession() {
+		MEMORY_SESSION.close();
+	}
+
 	@Setup(Level.Iteration)
 	public void setTable() {
 		TABLE = new ColumnarTable(new ColumnarTable.TableFormat(NB_OF_ATTRIBUTES, NB_OF_VALUES, CHUNK_SIZE), CHUNK_ALLOCATOR);

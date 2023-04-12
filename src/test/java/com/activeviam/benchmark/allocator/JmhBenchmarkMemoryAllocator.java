@@ -14,12 +14,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @State(Scope.Benchmark)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @Warmup(iterations = 4, time = 100, timeUnit = MILLISECONDS)
-@Measurement(iterations = 10, time = 100, timeUnit = MILLISECONDS)
+@Measurement(iterations = 1000, time = 10000, timeUnit = MILLISECONDS)
 @Fork(1)
 public class JmhBenchmarkMemoryAllocator {
     protected IChunkAllocator ALLOCATOR;
 
-    @Param({"1000", "10000", "100000" })
+    @Param({/* "1000", "10000",*/ "100000" })
     protected static int CHUNK_SIZE;
 
     @Benchmark
@@ -36,7 +36,7 @@ public class JmhBenchmarkMemoryAllocator {
         ALLOCATOR.allocateVectorChunk(CHUNK_SIZE, Types.INTEGER);
     }
 
-    @Param({"1000", "10000", "100000" })
+    @Param({/* "1000", "10000",*/ "1000000" })
     protected static int NB_ALLOCATIONS;
 
     @Benchmark
